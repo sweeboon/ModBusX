@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>actionConnect</class>
- <widget class="QDialog" name="actionConnect">
+ <class>actionAddSlave</class>
+ <widget class="QDialog" name="actionAddSlave">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -105,21 +105,6 @@
     </property>
    </item>
   </widget>
-  <widget class="QComboBox" name="ipAddress">
-   <property name="geometry">
-    <rect>
-     <x>50</x>
-     <y>280</y>
-     <width>131</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>127.0.0.1</string>
-    </property>
-   </item>
-  </widget>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
@@ -177,6 +162,19 @@
    </property>
    <property name="text">
     <string>Port</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="ipAddress">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>280</y>
+     <width>113</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>127.0.0.1</string>
    </property>
   </widget>
  </widget>

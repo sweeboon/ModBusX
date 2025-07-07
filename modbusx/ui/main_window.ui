@@ -63,7 +63,7 @@
     <property name="title">
      <string>Connection</string>
     </property>
-    <addaction name="actionConnect"/>
+    <addaction name="actionAddSlave"/>
     <addaction name="actionDisconnect"/>
    </widget>
    <widget class="QMenu" name="menuSetup">
@@ -135,9 +135,9 @@
     <string>Open Workspace</string>
    </property>
   </action>
-  <action name="actionConnect">
+  <action name="actionAddSlave">
    <property name="text">
-    <string>Connect</string>
+    <string>Add Slave...</string>
    </property>
   </action>
   <action name="actionDisconnect">

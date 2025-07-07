@@ -1,4 +1,4 @@
-# modbusx/ui/controls.py
+# modbusx/ui/SlaveControl.py
 
 """
 Reusable PyQt widgets for slave controls.
@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
     QSpinBox, QLineEdit, QTextEdit, QMessageBox, QWidget, QTableWidget, QTableWidgetItem
 )
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QIntValidator
 
 from ..slave_server import MultiUnitModbusServerThread  # see previous response for this class
 
@@ -19,12 +20,13 @@ class SlaveControl(QGroupBox):
     GroupBox controlling a multi-unit Modbus TCP server.
     User can add/remove/edit unit IDs and their register values for this TCP port.
     """
-    def __init__(self, port, address):
-        super().__init__(f"Modbus TCP Server (Port {port})")
+    def __init__(self, idx, port, address, parent=None):
+        super().__init__(f"Modbus TCP Server #{idx} (Port {port})", parent)
         self.setStyleSheet("QGroupBox { font-weight: bold; } ")
 
+        self.idx = idx
         self.port = port
-        self.address = address # Not used in this example, but can be extended
+        self.address = address
         self.server_thread = None
         self.unit_data = {}  # unit_id: (hr_val, ir_val)
 
@@ -35,7 +37,7 @@ class SlaveControl(QGroupBox):
         controls_hbox = QHBoxLayout()
         controls_hbox.addWidget(QLabel("Port:"))
         self.port_spin = QSpinBox()
-        self.port_spin.setRange(1025, 65535)
+        self.port_spin.setRange(1, 65535)
         self.port_spin.setValue(self.port)
         controls_hbox.addWidget(self.port_spin)
         self.add_unit_btn = QPushButton("Add Unit")
@@ -49,12 +51,13 @@ class SlaveControl(QGroupBox):
         vbox.addLayout(controls_hbox)
 
         # Table of units/config
-        self.unit_table = QTableWidget(0, 4)
-        self.unit_table.setHorizontalHeaderLabels(["Unit ID", "HR Value", "IR Value", "Remove"])
-        self.unit_table.setColumnWidth(0, 50)
+        self.unit_table = QTableWidget(0, 5)
+        self.unit_table.setHorizontalHeaderLabels(["Slave ID", "DI Value", "HR Value", "IR Value", ""])
+        self.unit_table.setColumnWidth(0, 80)
         self.unit_table.setColumnWidth(1, 80)
         self.unit_table.setColumnWidth(2, 80)
-        self.unit_table.setColumnWidth(3, 70)
+        self.unit_table.setColumnWidth(3, 80)
+        self.unit_table.setColumnWidth(4, 70)
         vbox.addWidget(self.unit_table)
 
         # Status log
@@ -88,16 +91,19 @@ class SlaveControl(QGroupBox):
         idspin = QSpinBox()
         idspin.setRange(1, 247)
         idspin.setValue(unit_id)
-        from PyQt5.QtGui import QIntValidator
-        hr_edit = QLineEdit("1000")
+        
+        di_edit = QLineEdit("0")
+        di_edit.setValidator(QIntValidator())
+        hr_edit = QLineEdit("0")
         hr_edit.setValidator(QIntValidator())
-        ir_edit = QLineEdit("2000")
+        ir_edit = QLineEdit("0")
         ir_edit.setValidator(QIntValidator())
         rem_btn = QPushButton("Remove")
         self.unit_table.setCellWidget(next_row, 0, idspin)
-        self.unit_table.setCellWidget(next_row, 1, hr_edit)
-        self.unit_table.setCellWidget(next_row, 2, ir_edit)
-        self.unit_table.setCellWidget(next_row, 3, rem_btn)
+        self.unit_table.setCellWidget(next_row, 1, di_edit)
+        self.unit_table.setCellWidget(next_row, 2, hr_edit)
+        self.unit_table.setCellWidget(next_row, 3, ir_edit)
+        self.unit_table.setCellWidget(next_row, 4, rem_btn)
         rem_btn.clicked.connect(lambda _, b=rem_btn: self.remove_unit_row(b))
         idspin.valueChanged.connect(self.check_duplicates)
         hr_edit.textChanged.connect(self.check_ints)
@@ -125,15 +131,17 @@ class SlaveControl(QGroupBox):
         data = {}
         for row in range(self.unit_table.rowCount()):
             idspin = self.unit_table.cellWidget(row, 0)
-            hr_edit = self.unit_table.cellWidget(row, 1)
-            ir_edit = self.unit_table.cellWidget(row, 2)
+            di_edit = self.unit_table.cellWidget(row, 1)
+            hr_edit = self.unit_table.cellWidget(row, 2)
+            ir_edit = self.unit_table.cellWidget(row, 3)
             try:
                 unit_id = idspin.value()
+                di_val = int(di_edit.text())
                 hr_val = int(hr_edit.text())
                 ir_val = int(ir_edit.text())
                 if unit_id in data:
-                    raise ValueError("Duplicate unit ID")
-                data[unit_id] = (hr_val, ir_val)
+                    raise ValueError("Duplicate Slave IDs detected!")
+                data[unit_id] = (di_val, hr_val, ir_val)
             except Exception as e:
                 self.log(f"Error in row {row+1}: {e}")
                 return None
@@ -146,7 +154,7 @@ class SlaveControl(QGroupBox):
             v = self.unit_table.cellWidget(row, 0).value()
             ids.append(v)
         if len(set(ids)) < len(ids):
-            self.status.setText("Duplicate unit IDs detected!")
+            self.status.setText("Duplicate Slave IDs detected!")
             self.start_btn.setEnabled(False)
         else:
             self.status.setText("")
