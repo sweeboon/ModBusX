@@ -10,8 +10,16 @@
     <height>541</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>Yu Gothic UI</family>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>Dialog</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>true</bool>
   </property>
   <property name="sizeGripEnabled">
    <bool>true</bool>
@@ -41,6 +49,11 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Yu Gothic UI</family>
+    </font>
+   </property>
    <item>
     <property name="text">
      <string>Modbus TCP/IP</string>
@@ -63,7 +76,7 @@
    </property>
    <property name="font">
     <font>
-     <family>SimSun</family>
+     <family>Yu Gothic UI</family>
      <pointsize>9</pointsize>
     </font>
    </property>
@@ -82,7 +95,7 @@
    </property>
    <property name="font">
     <font>
-     <family>SimSun</family>
+     <family>Yu Gothic UI</family>
      <pointsize>9</pointsize>
     </font>
    </property>
@@ -96,8 +109,13 @@
      <x>40</x>
      <y>110</y>
      <width>221</width>
-     <height>21</height>
+     <height>31</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Yu Gothic UI</family>
+    </font>
    </property>
    <item>
     <property name="text">
@@ -116,7 +134,7 @@
    </property>
    <property name="font">
     <font>
-     <family>SimSun</family>
+     <family>Yu Gothic UI</family>
      <pointsize>9</pointsize>
     </font>
    </property>
@@ -135,7 +153,8 @@
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
+     <family>Yu Gothic UI</family>
+     <pointsize>9</pointsize>
     </font>
    </property>
    <property name="text">
@@ -156,7 +175,7 @@
    </property>
    <property name="font">
     <font>
-     <family>SimSun</family>
+     <family>Yu Gothic UI</family>
      <pointsize>9</pointsize>
     </font>
    </property>
