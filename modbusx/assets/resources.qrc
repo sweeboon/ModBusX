@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>icons/add_register_group.svg</file>
+    <file>icons/connect.svg</file>
+    <file>icons/close_connect.svg</file>
+    <file>icons/add_slave.svg</file>
+    <file>icons/open_connect.svg</file>
+  </qresource>
+</RCC>

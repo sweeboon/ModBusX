@@ -7,7 +7,6 @@ from modbusx.ui.main_window import MainWindow
 def main():
     app = QApplication(sys.argv)
     win = MainWindow()
-    win.resize(750, 500)
     win.show()
     sys.exit(app.exec_())
 

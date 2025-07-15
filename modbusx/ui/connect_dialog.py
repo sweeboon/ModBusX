@@ -1,19 +1,19 @@
-# modbusx/ui/add_slave_dialog.py
+# modbusx/ui/Connect_Dialog.py
 from PyQt5.QtWidgets import QDialog, QMessageBox
 from PyQt5 import uic
 
-class AddSlaveDialog(QDialog):
+class ConnectDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        uic.loadUi("modbusx/ui/add_slave_dialog.ui", self)
+        uic.loadUi("modbusx/ui/Connect_Dialog.ui", self)
         self.setWindowTitle("Connect to Modbus Server")
         self.connectButton.accepted.connect(self.on_ok)
         self.connectButton.rejected.connect(self.reject)
         self.settings = {}
 
     def on_ok(self):
-        port = self.portNumber.text()
-        address = self.ipAddress.text()
+        port = self.portNumber.text().strip()
+        address = self.ipAddress.text().strip()
 
         # Validation
         if not port.isdigit() or not (1 <= int(port) <= 65535):

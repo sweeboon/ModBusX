@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>actionAddSlave</class>
- <widget class="QDialog" name="actionAddSlave">
+ <class>actionConnect</class>
+ <widget class="QDialog" name="actionConnect">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>493</width>
-    <height>541</height>
+    <height>522</height>
    </rect>
   </property>
   <property name="font">

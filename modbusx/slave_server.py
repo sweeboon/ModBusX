@@ -18,10 +18,10 @@ class MultiUnitModbusServerThread(QThread):
     async def start_server(self):
         slaves = {
             unit_id: ModbusSlaveContext(
-                hr=ModbusSequentialDataBlock(0, [hr_val] * 10),
-                ir=ModbusSequentialDataBlock(0, [ir_val] * 10)
+                hr=ModbusSequentialDataBlock(0, hr_vals),
+                ir=ModbusSequentialDataBlock(0, ir_vals)
             )
-            for unit_id, (hr_val, ir_val) in self.unit_definitions.items()
+            for unit_id, (hr_vals, ir_vals) in self.unit_definitions.items()
         }
         context = ModbusServerContext(slaves=slaves, single=False)
         self.status_signal.emit(
