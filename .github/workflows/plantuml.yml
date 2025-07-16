@@ -34,8 +34,8 @@ jobs:
             # Process each file individually with error handling
             for file in docs/diagrams/*.puml; do
             echo "Processing $file..."
-            plantuml -v -tpng "$file" -output docs/diagrams/generated
-            plantuml -v -tsvg "$file" -output docs/diagrams/generated
+            plantuml -v -tpng "$file" -o "$(pwd)/docs/diagrams/generated"
+            plantuml -v -tsvg "$file" -o "$(pwd)/docs/diagrams/generated"
             done
             
             # Verify output
