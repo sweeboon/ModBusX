@@ -30,14 +30,18 @@ jobs:
       - name: Generate diagrams
         run: |
             mkdir -p docs/diagrams/generated
-            plantuml -tpng docs/diagrams/*.puml -output docs/diagrams/generated
-            plantuml -tsvg docs/diagrams/*.puml -output docs/diagrams/generated
-        
-            # Debugging commands:
+    
+            # Process each file individually with error handling
+            for file in docs/diagrams/*.puml; do
+            echo "Processing $file..."
+            plantuml -v -tpng "$file" -output docs/diagrams/generated
+            plantuml -v -tsvg "$file" -output docs/diagrams/generated
+            done
+            
+            # Verify output
             echo "Generated files:"
             ls -la docs/diagrams/generated/
-            echo "PlantUML version:"
-            plantuml -version
+            [ "$(ls -A docs/diagrams/generated/)" ] || { echo "ERROR: No files generated"; exit 1; }
         
       - name: Commit and push changes
         if: github.ref == 'refs/heads/main'
