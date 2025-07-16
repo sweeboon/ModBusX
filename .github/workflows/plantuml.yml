@@ -24,10 +24,16 @@ jobs:
           
       - name: Generate diagrams
         run: |
-          mkdir -p docs/diagrams/generated
-          plantuml -tpng docs/diagrams/*.puml -output docs/diagrams/generated
-          plantuml -tsvg docs/diagrams/*.puml -output docs/diagrams/generated
-          
+            mkdir -p docs/diagrams/generated
+            plantuml -tpng docs/diagrams/*.puml -output docs/diagrams/generated
+            plantuml -tsvg docs/diagrams/*.puml -output docs/diagrams/generated
+        
+            # Debugging commands:
+            echo "Generated files:"
+            ls -la docs/diagrams/generated/
+            echo "PlantUML version:"
+            plantuml -version
+        
       - name: Commit and push changes
         if: github.ref == 'refs/heads/main'
         env:
