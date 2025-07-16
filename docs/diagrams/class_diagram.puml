@@ -1,0 +1,93 @@
+@startuml
+' ========== PACKAGE STRUCTURE ==========
+package "modbusx.core" {
+    class ModbusDevice {
+        - address: str
+        - port: int
+        - is_open: bool
+        - slaves: List<ModbusSlave>
+        + add_slave()
+        + remove_slave()
+    }
+
+    class ModbusSlave {
+        - slave_id: int
+        - register_groups: List<RegisterGroup>
+        + add_register_group()
+        + remove_register_group()
+    }
+    class RegisterGroup {
+        - register_id: int
+        - registers: Dict<int, Register>
+    }
+    class Register {
+        - type: str
+        - alias: str
+        - value: int
+        - comment: str
+    }
+}
+
+package "modbusx.slave_server" {
+    class MultiUnitModbusServerThread {
+        - port: int
+        - unit_definitions: Dict<int, Tuple<List<int>, List<int>>>
+        + start()
+        + stop()
+        + status_signal: pyqtSignal
+        + error_signal: pyqtSignal
+    }
+}
+
+package "modbusx.ui" {
+    class MainWindow <<QMainWindow>> {
+        - treeView
+        - tableView
+        - tree_model: QStandardItemModel
+        - reg_table_model: QStandardItemModel
+        + show_connect_dialog()
+        + add_connection()
+        + open_selected_connection()
+        + ...
+    }
+    class ConnectDialog <<QDialog>> {
+        - settings: Dict
+        + on_ok()
+    }
+    class SlaveControl <<QGroupBox>> {
+        - idx: int
+        - port: int
+        - address: str
+        - unit_data: Dict
+        + add_unit_row()
+        + start_server()
+        + stop_server()
+        + handle_remove_server()
+        + log()
+    }
+}
+
+package "modbusx.register_map" {
+    class RegisterMap {
+        + default_hr_block(size: int): Dict
+        + ...
+    }
+}
+
+' ========== RELATIONSHIPS ==========
+' Model hierarchy
+ModbusDevice "1" -- "0..*" ModbusSlave : slaves
+ModbusSlave "1" -- "0..*" RegisterGroup : register_groups
+RegisterGroup "1" -- "0..*" Register : registers
+
+' UI->Model and Backend
+MainWindow ..> ModbusDevice : manages
+MainWindow ..> MultiUnitModbusServerThread : starts/stops
+MainWindow ..> ConnectDialog : uses
+MainWindow ..> SlaveControl : uses
+
+SlaveControl ..> MultiUnitModbusServerThread : starts/stops
+
+' RegisterMap is a utility/templating class for Model init
+RegisterGroup ..> RegisterMap : uses (staticmethods)
+@enduml

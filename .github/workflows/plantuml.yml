@@ -1,0 +1,38 @@
+name: Generate PlantUML Diagrams
+on:
+  push:
+    paths:
+      - 'docs/diagrams/*.puml'
+      - '.github/workflows/plantuml.yml'
+  pull_request:
+    paths:
+      - 'docs/diagrams/*.puml'
+
+jobs:
+  generate-diagrams:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for git diff
+
+      - name: Set up PlantUML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y plantuml graphviz
+          
+      - name: Generate diagrams
+        run: |
+          mkdir -p docs/diagrams/generated
+          plantuml -tpng docs/diagrams/*.puml -output docs/diagrams/generated
+          plantuml -tsvg docs/diagrams/*.puml -output docs/diagrams/generated
+          
+      - name: Commit and push changes
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add docs/diagrams/generated/
+          git diff --quiet && git diff --staged --quiet || git commit -m "[Automated] Update PlantUML diagrams"
+          git push
