@@ -16,8 +16,6 @@ class MainWindow(QMainWindow):
         uic.loadUi("modbusx/ui/main_window.ui", self)
         self.setWindowTitle("ModbusX Multi-Instance Slave Demo")
 
-        #2nd Test
-
         # ---- Tree setup ----
         self.treeView = getattr(self, "treeView", None)
         self.tree_model = QStandardItemModel()
