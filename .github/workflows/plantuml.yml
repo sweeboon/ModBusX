@@ -21,7 +21,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y plantuml graphviz
-          
+
+      - name: List source files
+        run: |
+            echo "Checking for .puml files:"
+            ls -la docs/diagrams/*.puml || echo "No .puml files found"
+
       - name: Generate diagrams
         run: |
             mkdir -p docs/diagrams/generated
