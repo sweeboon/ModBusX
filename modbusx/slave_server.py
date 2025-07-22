@@ -16,13 +16,16 @@ class MultiUnitModbusServerThread(QThread):
         self._server = None
 
     async def start_server(self):
-        slaves = {
-            unit_id: ModbusSlaveContext(
-                hr=ModbusSequentialDataBlock(0, hr_vals),
-                ir=ModbusSequentialDataBlock(0, ir_vals)
-            )
-            for unit_id, (hr_vals, ir_vals) in self.unit_definitions.items()
-        }
+        slaves = {}
+        for unit_id, dr in self.unit_definitions.items():
+            blocks = {}
+            for regtype in ('hr', 'ir', 'co', 'di'):
+                if regtype in dr:
+                    start, arr = dr[regtype]
+                    if arr and len(arr):
+                        blocks[regtype] = ModbusSequentialDataBlock(start, arr)
+            slaves[unit_id] = ModbusSlaveContext(**blocks)
+        
         context = ModbusServerContext(slaves=slaves, single=False)
         self.status_signal.emit(
             f"Starting server on 127.0.0.1:{self.port} units={list(self.unit_definitions.keys())}"

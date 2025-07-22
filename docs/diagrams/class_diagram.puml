@@ -12,30 +12,47 @@ package "modbusx.core" {
 
     class ModbusSlave {
         - slave_id: int
-        - register_groups: List<RegisterGroup>
+        - register_map: RegisterMap
+        - groups: List<RegisterGroupMeta>
         + add_register_group()
         + remove_register_group()
     }
-    class RegisterGroup {
-        - register_id: int
-        - registers: Dict<int, Register>
+    class RegisterMap {
+        - hr: Dict<int, RegisterEntry>
+        - ir: Dict<int, RegisterEntry>
+        - co: Dict<int, RegisterEntry>
+        - di: Dict<int, RegisterEntry>
+        + add_block()
+        + as_pymodbus_array()
+        + all_entries()
+        + find_entry_by_addr()
     }
-    class Register {
-        - type: str
-        - alias: str
+    class RegisterEntry {
+        - addr: int
+        - reg_type: str
         - value: int
+        - alias: str
         - comment: str
+        - units: str
+    }
+    ' Stand-in for group nodes in tree (not the register data itself)
+    class RegisterGroupMeta {
+        - register_id: int
+        - reg_type: str
+        - start_addr: int
+        - size: int
+        - parent_slave_map: RegisterMap
     }
 }
 
 package "modbusx.slave_server" {
     class MultiUnitModbusServerThread {
         - port: int
-        - unit_definitions: Dict<int, Tuple<List<int>, List<int>>>
+        - unit_definitions: Dict<int, Dict<str, Tuple<int, List<int>>>>
         + start()
         + stop()
-        + status_signal: pyqtSignal
-        + error_signal: pyqtSignal
+        + status_signal
+        + error_signal
     }
 }
 
@@ -54,40 +71,22 @@ package "modbusx.ui" {
         - settings: Dict
         + on_ok()
     }
-    class SlaveControl <<QGroupBox>> {
-        - idx: int
-        - port: int
-        - address: str
-        - unit_data: Dict
-        + add_unit_row()
-        + start_server()
-        + stop_server()
-        + handle_remove_server()
-        + log()
-    }
-}
-
-package "modbusx.register_map" {
-    class RegisterMap {
-        + default_hr_block(size: int): Dict
-        + ...
-    }
 }
 
 ' ========== RELATIONSHIPS ==========
-' Model hierarchy
 ModbusDevice "1" -- "0..*" ModbusSlave : slaves
-ModbusSlave "1" -- "0..*" RegisterGroup : register_groups
-RegisterGroup "1" -- "0..*" Register : registers
+ModbusSlave "1" -- "1" RegisterMap : "holds"
+ModbusSlave "1" -- "0..*" RegisterGroupMeta : "tree groups"
+RegisterMap "1" -- "0..*" RegisterEntry
+RegisterGroupMeta "1" ..> RegisterMap : parent
 
 ' UI->Model and Backend
 MainWindow ..> ModbusDevice : manages
 MainWindow ..> MultiUnitModbusServerThread : starts/stops
 MainWindow ..> ConnectDialog : uses
-MainWindow ..> SlaveControl : uses
 
-SlaveControl ..> MultiUnitModbusServerThread : starts/stops
+' ServerThread expects:
+'   unit_definitions: Dict<slave_id, Dict<regtype, (start_addr, array)>>
+MultiUnitModbusServerThread ..> RegisterMap : uses as value provider
 
-' RegisterMap is a utility/templating class for Model init
-RegisterGroup ..> RegisterMap : uses (staticmethods)
 @enduml

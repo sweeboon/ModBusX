@@ -5,8 +5,9 @@ from PyQt5 import uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from .connect_dialog import ConnectDialog
-from modbusx.register_map import default_hr_block
+from modbusx.register_map import RegisterEntry, RegisterMap
 from modbusx.slave_server import MultiUnitModbusServerThread
+from modbusx.logger import global_logger
 
 import modbusx.assets.resources_rc
 
@@ -36,6 +37,11 @@ class MainWindow(QMainWindow):
             self.splitter.setStretchFactor(0, 1)     # treeView scales a bit
             self.splitter.setStretchFactor(1, 3)     # right panel scales more
 
+        # Hide log box by default if desired
+        self.statusText.setVisible(self.actionShowLogs.isChecked())
+        # Connect toggled signal
+        self.actionShowLogs.toggled.connect(self.statusText.setVisible)
+
         # ---- Connect signals ----
         self.treeView.selectionModel().currentChanged.connect(self.on_tree_selection_changed)
 
@@ -49,6 +55,9 @@ class MainWindow(QMainWindow):
             self.actionAddSlave.triggered.connect(self.add_slave_to_selected_connection)
         if hasattr(self, "actionAddRegisterGroup"):
             self.actionAddRegisterGroup.triggered.connect(self.add_reggroup_to_selected_slave)
+
+        # Connect the logger's signal to append function
+        global_logger.message_signal.connect(self.append_to_log_widget)
 
     def show_connect_dialog(self):
         dlg = ConnectDialog(self)
@@ -75,20 +84,40 @@ class MainWindow(QMainWindow):
         # ---- Auto-add first Slave (ID 1) and under it Register Group (ID 1) ----
         slave_id = 1
         slave_item = QStandardItem(f"Slave ID: {slave_id}")
-        slave_info = {"slave_id": slave_id, "register_groups": []}
-        slave_item.setData(slave_info, Qt.UserRole)
+
+        slave_info = {
+            "slave_id": slave_id,
+            "register_map": RegisterMap(),
+        }
+
+        # The ONE RegisterMap instance for this slave (per comm node)
+        register_map = RegisterMap()
+        # Add an HR block by default (as the first group, eg. 40001..40010)
+        register_map.add_block('hr', 40001, 10)
+
+        slave_info = {
+            "slave_id": slave_id,
+            "register_map": register_map,
+            "groups": []  # group metadata for UI tree only
+        }
 
         # Add first register group under this slave
         reg_group_id = 1
-        reg_item = QStandardItem(f"Register Group: {reg_group_id}")
-        reg_info = {"register_id": reg_group_id, "registers": {}}
-        reg_item.setData(reg_info, Qt.UserRole)
+        group_meta = {
+            "register_id": reg_group_id,
+            "reg_type": "hr",
+            "start_addr": 40001,
+            "size": 10,
+            "parent_slave_map": register_map,
+        }
+        reg_item = QStandardItem(f"Register Group: {reg_group_id} [HR 40001:40010]")
+        reg_item.setData(group_meta, Qt.UserRole)
         # Attach it as child of the slave
         slave_item.appendRow(reg_item)
         # Update slave_info
-        slave_info["register_groups"].append(reg_info)
+        slave_info["groups"].append(group_meta)
 
-        # Attach slave to connection
+        slave_item.setData(slave_info, Qt.UserRole)
         conn_item.appendRow(slave_item)
         conn_info['slaves'].append(slave_info)
         conn_item.setData(conn_info, Qt.UserRole)
@@ -96,14 +125,6 @@ class MainWindow(QMainWindow):
         self.tree_model.appendRow(conn_item)
         self.treeView.expand(self.tree_model.indexFromItem(conn_item))
         self.treeView.expand(self.tree_model.indexFromItem(slave_item))
-
-        reg_map = default_hr_block(size=8)
-
-        register_group_info = {
-            "register_id": reg_group_id,
-            "registers": reg_map
-        }
-        reg_item.setData(register_group_info, Qt.UserRole)
 
     def _get_selected_connection_item(self):
         """Helper: Returns the connection-level item for current selection, or None."""
@@ -124,7 +145,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Nothing Selected", "Please select a slave node.")
             return None
         item = self.tree_model.itemFromIndex(indexes[0])
-        # If not a slave, traverse up tree until we hit a child of connection
+        # If not a slave, traverse up tree until child of connection
         while item.parent() is not None:
             parent = item.parent()
             # If the parent is root (connection), and item starts with "Slave ID:"
@@ -149,20 +170,14 @@ class MainWindow(QMainWindow):
         unit_definitions = {}
         for slave in conn_info.get("slaves", []):
             sid = slave["slave_id"]
-            # Let's aggregate all register groups per slave; you can decide on max address supported; here 10 for demo
-            HR_SIZE = 10
-            IR_SIZE = 10
-            hr_vals = [0]*HR_SIZE
-            ir_vals = [0]*IR_SIZE
-            for group in slave["register_groups"]:
-                regs = group.get("registers", {})
-                for addr, reg in regs.items():
-                    i = int(addr)
-                    if reg.get('type') == 'hr' and 0 <= i < HR_SIZE:
-                        hr_vals[i] = reg.get('value', 0)
-                    elif reg.get('type') == 'ir' and 0 <= i < IR_SIZE:
-                        ir_vals[i] = reg.get('value', 0)
-            unit_definitions[sid] = (hr_vals, ir_vals)
+            reg_map = slave["register_map"]
+            unit_definitions[sid] = {
+                'hr': reg_map.as_pymodbus_array('hr'),  # (start, arr)
+                'ir': reg_map.as_pymodbus_array('ir'),
+                'co': reg_map.as_pymodbus_array('co'),
+                'di': reg_map.as_pymodbus_array('di'),
+            }
+
         # --- Start backend thread ---
         modbus_thread = MultiUnitModbusServerThread(
             conn_info["port"], unit_definitions
@@ -178,10 +193,7 @@ class MainWindow(QMainWindow):
         item.setText(f"{conn_info['address']}:{conn_info['port']} (OPEN)")
         QMessageBox.information(self, "Connection Opened",
             f"Opened Modbus on {conn_info['address']}:{conn_info['port']}.")
-        print("DEBUG: Creating modbus thread for port=%d unit_definitions:" % conn_info["port"])
-        for sid, (hr_vals, ir_vals) in unit_definitions.items():
-            print("  Slave %d HR: %s" % (sid, hr_vals))
-            print("  Slave %d IR: %s" % (sid, ir_vals))
+        global_logger.log("Creating modbus thread for port=%d unit_definitions:" % conn_info["port"])
 
     def close_selected_connection(self):
         item = self._get_selected_connection_item()
@@ -210,7 +222,6 @@ class MainWindow(QMainWindow):
         if not conn_item:
             return
         conn_info = conn_item.data(Qt.UserRole)
-        # Find next available slave ID
         used_ids = set()
         for i in range(conn_item.rowCount()):
             child_item = conn_item.child(i)
@@ -225,94 +236,99 @@ class MainWindow(QMainWindow):
             next_id += 1
 
         slave_item = QStandardItem(f"Slave ID: {next_id}")
-        slave_info = {"slave_id": next_id, "register_groups": []}
-        slave_item.setData(slave_info, Qt.UserRole)
-
-        # Auto-add Register Group 1 under this slave
-        reg_group_id = 1
-        reg_item = QStandardItem(f"Register Group: {reg_group_id}")
-        reg_info = {"register_id": reg_group_id, "registers": {}}
-        reg_item.setData(reg_info, Qt.UserRole)
+        register_map = RegisterMap()
+        # Default group: first HR block for new slave
+        reg_type, start_addr, size = "hr", 40001, 8
+        register_map.add_block(reg_type, start_addr, size)
+        group_meta = {
+            "register_id": 1,
+            "reg_type": reg_type,
+            "start_addr": start_addr,
+            "size": size,
+            "parent_slave_map": register_map,
+        }
+        reg_item = QStandardItem(f"Register Group: 1 [HR 40001:40008]")
+        reg_item.setData(group_meta, Qt.UserRole)
         slave_item.appendRow(reg_item)
-        slave_info["register_groups"].append(reg_info)
-
+        slave_info = {
+            "slave_id": next_id,
+            "register_map": register_map,
+            "groups": [group_meta]
+        }
+        slave_item.setData(slave_info, Qt.UserRole)
         conn_item.appendRow(slave_item)
         conn_info['slaves'].append(slave_info)
         conn_item.setData(conn_info, Qt.UserRole)
-
         self.treeView.expand(self.tree_model.indexFromItem(conn_item))
         self.treeView.expand(self.tree_model.indexFromItem(slave_item))
         QMessageBox.information(self, "Slave Added", f"Added Slave ID: {next_id}.")
-
-        reg_map = default_hr_block(size=8)
-
-        register_group_info = {
-            "register_id": next_id,
-            "registers": reg_map
-        }
-        reg_item.setData(register_group_info, Qt.UserRole)
 
     def add_reggroup_to_selected_slave(self):
         slave_item = self._get_selected_slave_item()
         if not slave_item:
             return
         slave_info = slave_item.data(Qt.UserRole)
-        # -- SCAN TREE, not just dict! --
+        # Extract used group IDs and next available:
         used_ids = set()
         for i in range(slave_item.rowCount()):
             child = slave_item.child(i)
             if child.text().startswith("Register Group:"):
                 try:
-                    gid = int(child.text().split(":")[1].strip())
+                    gid = int(child.text().split(":")[1].split()[0])
                     used_ids.add(gid)
                 except Exception:
                     pass
         next_id = 1
         while next_id in used_ids:
             next_id += 1
-
-        reg_item = QStandardItem(f"Register Group: {next_id}")
-        reg_info = {"register_id": next_id, "registers": {}}
-        reg_item.setData(reg_info, Qt.UserRole)
+        # For demo, each new group is an HR block starting at next 10s
+        reg_type = "hr"
+        start_addr = 40001 + 10 * (next_id - 1)
+        size = 8
+        reg_map = slave_info["register_map"]
+        reg_map.add_block(reg_type, start_addr, size)
+        group_meta = {
+            "register_id": next_id,
+            "reg_type": reg_type,
+            "start_addr": start_addr,
+            "size": size,
+            "parent_slave_map": reg_map,
+        }
+        reg_item = QStandardItem(f"Register Group: {next_id} [HR {start_addr}:{start_addr+size-1}]")
+        reg_item.setData(group_meta, Qt.UserRole)
         slave_item.appendRow(reg_item)
-        slave_info["register_groups"].append(reg_info)
+        slave_info["groups"].append(group_meta)
         slave_item.setData(slave_info, Qt.UserRole)
         self.treeView.expand(self.tree_model.indexFromItem(slave_item))
         QMessageBox.information(self, "Register Group Added", f"Added Register Group: {next_id}")
 
-        reg_map = default_hr_block(size=8)
-
-        register_group_info = {
-            "register_id": next_id,
-            "registers": reg_map
-        }
-        reg_item.setData(register_group_info, Qt.UserRole)
-
     def on_tree_selection_changed(self, current, previous):
         item = self.tree_model.itemFromIndex(current)
         if not item:
-            # fallback, clear table
             self.reg_table_model.setRowCount(0)
             return
-
-        # Only show data if a register group node is selected:
-        if item.text().startswith("Register Group:"):
-            reg_info = item.data(Qt.UserRole)
-            reg_data = reg_info.get("registers", {})  # should be a dict mapping address to info
-            # reg_data could be: {1: {"type": "HR", "alias": "Pump", "value": 42, "comment": "set-point"}, ...}
-            self.reg_table_model.setRowCount(0)  # clear previous data
-
-            for row, (addr, content) in enumerate(reg_data.items()):
+        group_meta = item.data(Qt.UserRole)
+        if isinstance(group_meta, dict) and "parent_slave_map" in group_meta:
+            reg_map = group_meta['parent_slave_map']
+            reg_type = group_meta['reg_type']
+            start_addr = group_meta['start_addr']
+            size = group_meta['size']
+            entries = [
+                e for e in reg_map.all_entries(reg_type)
+                if start_addr <= e.addr < start_addr + size
+            ]
+            self.reg_table_model.setRowCount(0)
+            for row, entry in enumerate(entries):
                 self.reg_table_model.insertRow(row)
-                # You may want to fill with sensible demo data if empty:
-                reg_type = content.get("type", "")
-                alias = content.get("alias", "")
-                value = content.get("value", "")
-                comment = content.get("comment", "")
-                self.reg_table_model.setItem(row, 0, QStandardItem(str(reg_type)))
-                self.reg_table_model.setItem(row, 1, QStandardItem(str(addr)))
-                self.reg_table_model.setItem(row, 2, QStandardItem(str(alias)))
-                self.reg_table_model.setItem(row, 3, QStandardItem(str(value)))
-                self.reg_table_model.setItem(row, 4, QStandardItem(str(comment)))
+                self.reg_table_model.setItem(row, 0, QStandardItem(reg_type.upper()))
+                self.reg_table_model.setItem(row, 1, QStandardItem(str(entry.addr)))
+                self.reg_table_model.setItem(row, 2, QStandardItem(str(entry.alias)))
+                self.reg_table_model.setItem(row, 3, QStandardItem(str(entry.value)))
+                self.reg_table_model.setItem(row, 4, QStandardItem(str(entry.comment)))
         else:
             self.reg_table_model.setRowCount(0)
+
+    def append_to_log_widget(self, msg):
+        # slot for log messages
+        if self.statusText.isVisible():
+            self.statusText.append(msg)

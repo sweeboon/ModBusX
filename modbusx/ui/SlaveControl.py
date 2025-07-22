@@ -13,6 +13,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIntValidator
 
 from ..slave_server import MultiUnitModbusServerThread  # see previous response for this class
+from modbusx.register_map import RegisterMap
 
 class SlaveControl(QGroupBox):
     on_close = pyqtSignal(object)
@@ -141,7 +142,13 @@ class SlaveControl(QGroupBox):
                 ir_val = int(ir_edit.text())
                 if unit_id in data:
                     raise ValueError("Duplicate Slave IDs detected!")
-                data[unit_id] = (di_val, hr_val, ir_val)
+                # --- Build RegisterMap for this slave ---
+                reg_map = RegisterMap()
+                reg_map.add_block('co', 1, 1, di_val)       # 1 coil at address 1, value=di_val
+                reg_map.add_block('hr', 40001, 1, hr_val)   # 1 HR at 40001
+                reg_map.add_block('ir', 30001, 1, ir_val)   # 1 IR at 30001
+                # optionally: reg_map.add_block('di', ...)
+                data[unit_id] = reg_map
             except Exception as e:
                 self.log(f"Error in row {row+1}: {e}")
                 return None
@@ -182,7 +189,16 @@ class SlaveControl(QGroupBox):
             QMessageBox.warning(self, "Error", "Configure at least one unit!")
             return
         port = self.port_spin.value()
-        self.server_thread = MultiUnitModbusServerThread(port, self.unit_data)
+        # Prepare unit_definitions as {unit_id: (hr_vals, ir_vals, co_vals, di_vals)}
+        unit_definitions = {}
+        for unit_id, reg_map in self.unit_data.items():
+            hr_start, hr_vals = reg_map.as_pymodbus_array('hr')
+            ir_start, ir_vals = reg_map.as_pymodbus_array('ir')
+            co_start, co_vals = reg_map.as_pymodbus_array('co')
+            di_start, di_vals = reg_map.as_pymodbus_array('di')
+            unit_definitions[unit_id] = (hr_start, hr_vals, ir_start, ir_vals, co_start, co_vals, di_start, di_vals)
+
+        self.server_thread = MultiUnitModbusServerThread(port, unit_definitions)
         self.server_thread.status_signal.connect(self.log)
         self.server_thread.error_signal.connect(self.log)
         self.server_thread.start()
@@ -191,7 +207,10 @@ class SlaveControl(QGroupBox):
         self.port_spin.setEnabled(False)
         self.add_unit_btn.setEnabled(False)
         self.unit_table.setEnabled(False)
-        self.log("Server STARTED on port %d, units: %s" % (port, ",".join(str(u) for u in self.unit_data.keys())))
+        self.log(
+            "Server STARTED on port %d, units: %s" %
+            (port, ",".join(str(u) for u in self.unit_data.keys()))
+    )
 
     def stop_server(self):
         if self.server_thread:
