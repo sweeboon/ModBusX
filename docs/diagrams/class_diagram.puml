@@ -1,32 +1,8 @@
 @startuml
-' ========== PACKAGE STRUCTURE ==========
-package "modbusx.core" {
-    class ModbusDevice {
-        - address: str
-        - port: int
-        - is_open: bool
-        - slaves: List<ModbusSlave>
-        + add_slave()
-        + remove_slave()
-    }
 
-    class ModbusSlave {
-        - slave_id: int
-        - register_map: RegisterMap
-        - groups: List<RegisterGroupMeta>
-        + add_register_group()
-        + remove_register_group()
-    }
-    class RegisterMap {
-        - hr: Dict<int, RegisterEntry>
-        - ir: Dict<int, RegisterEntry>
-        - co: Dict<int, RegisterEntry>
-        - di: Dict<int, RegisterEntry>
-        + add_block()
-        + as_pymodbus_array()
-        + all_entries()
-        + find_entry_by_addr()
-    }
+'==================== USED MODULES ==========================
+
+package "modbusx.register_map" {
     class RegisterEntry {
         - addr: int
         - reg_type: str
@@ -35,58 +11,88 @@ package "modbusx.core" {
         - comment: str
         - units: str
     }
-    ' Stand-in for group nodes in tree (not the register data itself)
-    class RegisterGroupMeta {
-        - register_id: int
-        - reg_type: str
-        - start_addr: int
-        - size: int
-        - parent_slave_map: RegisterMap
+    class RegisterMap {
+        + add_block(type, start, size, default_value)
+        + as_pymodbus_array(type): (start_addr, arr)
+        + find_entry_by_addr(type, addr): RegisterEntry
+        + all_entries(type): List<RegisterEntry>
+        + to_meta_list()
+    }
+}
+
+package "modbusx.logger" {
+    class Logger {
+        + log(msg: str)
+        + message_signal: pyqtSignal
     }
 }
 
 package "modbusx.slave_server" {
     class MultiUnitModbusServerThread {
         - port: int
-        - unit_definitions: Dict<int, Dict<str, Tuple<int, List<int>>>>
+        - unit_definitions: dict
+        - loop
+        - _server
+        + status_signal: pyqtSignal
+        + error_signal: pyqtSignal
         + start()
         + stop()
-        + status_signal
-        + error_signal
+        + run()
     }
 }
 
 package "modbusx.ui" {
     class MainWindow <<QMainWindow>> {
-        - treeView
-        - tableView
+        - treeView: QTreeView
         - tree_model: QStandardItemModel
         - reg_table_model: QStandardItemModel
         + show_connect_dialog()
         + add_connection()
         + open_selected_connection()
-        + ...
+        + close_selected_connection()
+        + add_slave_to_selected_connection()
+        + add_reggroup_to_selected_slave()
+        + on_tree_selection_changed()
+        + append_to_log_widget()
+        ...
     }
+
     class ConnectDialog <<QDialog>> {
-        - settings: Dict
+        - settings: dict
         + on_ok()
+    }
+
+    class SlaveControl <<QGroupBox>> {
+        - idx: int
+        - port: int
+        - address: str
+        - unit_data: dict
+        + add_unit_row()
+        + start_server()
+        + stop_server()
+        + handle_remove_server()
+        + log()
     }
 }
 
-' ========== RELATIONSHIPS ==========
-ModbusDevice "1" -- "0..*" ModbusSlave : slaves
-ModbusSlave "1" -- "1" RegisterMap : "holds"
-ModbusSlave "1" -- "0..*" RegisterGroupMeta : "tree groups"
-RegisterMap "1" -- "0..*" RegisterEntry
-RegisterGroupMeta "1" ..> RegisterMap : parent
+'=================== RELATIONSHIPS ============================
 
-' UI->Model and Backend
-MainWindow ..> ModbusDevice : manages
-MainWindow ..> MultiUnitModbusServerThread : starts/stops
-MainWindow ..> ConnectDialog : uses
+' MainWindow is wired up with everything
+MainWindow ..> RegisterMap       : per-slave
+MainWindow ..> MultiUnitModbusServerThread : starts/controls
+MainWindow ..> ConnectDialog     : launches
+MainWindow ..> Logger            : logs/receives message_signal
 
-' ServerThread expects:
-'   unit_definitions: Dict<slave_id, Dict<regtype, (start_addr, array)>>
-MultiUnitModbusServerThread ..> RegisterMap : uses as value provider
+MultiUnitModbusServerThread ..> RegisterMap : uses register data arrays
+
+' Dialog is only used from MainWindow
+ConnectDialog ..> MainWindow : parent
+
+' SlaveControl is independently used as widget for per-port server
+SlaveControl ..> RegisterMap
+SlaveControl ..> MultiUnitModbusServerThread
+
+' Logger is observable signal/slot for logging messages
+Logger ..> MainWindow : message_signal
 
 @enduml
