@@ -178,6 +178,12 @@ class MainWindow(QMainWindow):
                 'di': reg_map.as_pymodbus_array('di'),
             }
 
+        for unit_id, defs in unit_definitions.items():
+            print(f"Unit {unit_id}:")
+            for regtype in ('hr', 'ir', 'co', 'di'):
+                start, arr = defs[regtype]
+                print(f"  {regtype.upper()} Start={start} End={start+len(arr)-1} (length={len(arr)})")
+
         # --- Start backend thread ---
         modbus_thread = MultiUnitModbusServerThread(
             conn_info["port"], unit_definitions

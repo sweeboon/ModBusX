@@ -55,7 +55,7 @@ class RegisterMap():
         arr = []
         for a in range(addr_min, addr_max + 1):
             arr.append(dct.get(a, RegisterEntry(a, t)).value)
-        return (addr_min, arr)
+        return (0, arr)
 
     def find_entry_by_addr(self, reg_type: str, modbus_addr: int) -> RegisterEntry:
         # Returns RegisterEntry, or None if not present
