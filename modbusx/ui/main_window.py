@@ -182,7 +182,9 @@ class MainWindow(QMainWindow):
             print(f"Unit {unit_id}:")
             for regtype in ('hr', 'ir', 'co', 'di'):
                 start, arr = defs[regtype]
-                print(f"  {regtype.upper()} Start={start} End={start+len(arr)-1} (length={len(arr)})")
+                global_logger.log(
+                    f"  {regtype.upper()} Start={start} End={start+len(arr)-1} (length={len(arr)})"
+                )
 
         # --- Start backend thread ---
         modbus_thread = MultiUnitModbusServerThread(

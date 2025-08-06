@@ -5,6 +5,7 @@ Utility/data handling for register maps: full-featured models for all Modbus typ
 """
 
 from typing import Dict, List
+from modbusx.logger import global_logger
 
 class RegisterEntry():
     """Represents a single Modbus register/coils, with metadata."""
@@ -40,6 +41,9 @@ class RegisterMap():
             # If already exists, skip/overwrite? For now, skip
             if addr not in dct:
                 dct[addr] = RegisterEntry(addr, t, default_value)
+        global_logger.debug(
+            f"Added block: type={t.upper()} start={start_addr} size={size}, total now={len(dct)}"
+        )
     
     def as_pymodbus_array(self, reg_type: str) -> List[int]:
         """
@@ -55,6 +59,9 @@ class RegisterMap():
         arr = []
         for a in range(addr_min, addr_max + 1):
             arr.append(dct.get(a, RegisterEntry(a, t)).value)
+        global_logger.debug(
+            f"as_pymodbus_array: reg_type={reg_type.upper()}, start=0, len(arr)={len(arr)}"
+        )
         return (0, arr)
 
     def find_entry_by_addr(self, reg_type: str, modbus_addr: int) -> RegisterEntry:
