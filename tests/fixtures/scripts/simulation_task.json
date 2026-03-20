@@ -1,0 +1,39 @@
+{
+  "name": "Generator Startup Simulation",
+  "version": 1,
+  "defaults": {
+    "server": "127.0.0.1:502",
+    "unit": 1,
+    "reg_type": "hr"
+  },
+  "steps": [
+    {
+      "at": "0s",
+      "action": "set",
+      "target": { "addr": 1 },
+      "value": 100,
+      "description": "Start Generator (Status=100)"
+    },
+    {
+      "at": "5s",
+      "action": "set",
+      "target": { "addr": 2 },
+      "value": 50,
+      "description": "Warmup Phase (Power=50)"
+    },
+    {
+      "at": "10s",
+      "action": "set",
+      "target": { "addr": 2 },
+      "value": 100,
+      "description": "Full Power (Power=100)"
+    },
+    {
+      "at": "15s",
+      "action": "set",
+      "target": { "addr": 1 },
+      "value": 0,
+      "description": "Stop Generator (Status=0)"
+    }
+  ]
+}

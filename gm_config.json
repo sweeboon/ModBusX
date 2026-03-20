@@ -1,0 +1,92 @@
+{
+    "CN": {
+        "url_login": "http://gopsgm.sems.com.cn/home/login",
+        "url_target": "http://gopsgm.sems.com.cn/DataSearch/Index",
+        "username": "\u8d28\u91cf\u4e2d\u8bd5",
+        "password": "Goodwe2018",
+        "has_region_select": false,
+        "has_size_field": true,
+        "size_value": "500",
+        "from_date": "2026-03-03 00:00:00",
+        "to_date": "2026-03-03 23:00:00",
+        "sns": [
+            "23000EZC25460001"
+        ],
+        "final_sleep": 300
+    },
+    "EU": {
+        "url_login": "http://gm.semsportal.com/",
+        "url_target": "http://gm.semsportal.com/DataSearch/Query",
+        "username": "bin.liu_eu@goodwe.com",
+        "password": "Goodwe2018",
+        "has_region_select": true,
+        "has_size_field": false,
+        "from_date": "2026-03-03 00:00:00",
+        "to_date": "2026-03-03 23:00:00",
+        "sns": [
+            "23000EZC25310089",
+            "23000EZC25210110",
+            "23000EZC25310066",
+            "23000EZC25310077",
+            "23000EZC25210145",
+            "23000EZC25310057",
+            "23000EZC25210156",
+            "23000EZC25310094",
+            "23000EZC25210131"
+        ],
+        "final_sleep": 300
+    },
+    "HK": {
+        "url_login": "http://gm.semsportal.com/",
+        "url_target": "http://gm.semsportal.com/DataSearch/Query",
+        "username": "bin.liu_hk@goodwe.com",
+        "password": "Goodwe2018",
+        "has_region_select": true,
+        "has_size_field": false,
+        "from_date": "2026-03-03 00:00:00",
+        "to_date": "2026-03-03 23:00:00",
+        "sns": [
+            "23000EZC24410003",
+            "23000EZC24410005",
+            "23000EZC24410001",
+            "23000EZC25610142",
+            "23000EZC25210201",
+            "93000SET24C30002",
+            "93000SEA25530003"
+        ],
+        "final_sleep": 300
+    },
+    "AU": {
+        "url_login": "http://gm.semsportal.com/",
+        "url_target": "http://gm.semsportal.com/DataSearch/Query",
+        "username": "bin.liu_au@goodwe.com",
+        "password": "Goodwe2018",
+        "has_region_select": true,
+        "has_size_field": false,
+        "from_date": "2026-03-03 00:00:00",
+        "to_date": "2026-03-03 23:00:00",
+        "sns": [
+            "23000EZC24B10010",
+            "23000EZC24B10044",
+            "23000EZC24710011",
+            "23000EZC24710014",
+            "23000EZC24B10056",
+            "23000EZC24B10020",
+            "93000SEA24930003",
+            "93000SEA24930006"
+        ],
+        "final_sleep": 300
+    },
+    "US": {
+        "url_login": "http://gm.semsportal.com/",
+        "url_target": "http://gm.semsportal.com/DataSearch/Query",
+        "username": "bin.liu_us@goodwe.com",
+        "password": "Goodwe2018",
+        "has_region_select": true,
+        "has_size_field": false,
+        "from_date": "2026-03-03 00:00:00",
+        "to_date": "2026-03-03 23:00:00",
+        "sns": [],
+        "final_sleep": 300
+    }
+}

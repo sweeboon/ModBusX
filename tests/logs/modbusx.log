@@ -1,0 +1,147 @@
+[2025-08-28 14:53:22] INFO     [ModBusX] [AsyncModbusServer] Setting up Unit 1
+[2025-08-28 14:53:22] INFO     [ModBusX]   HR: addrs=[40001, 40002, 40003, 40004, 40005, 40006, 40007, 40008, 40009, 40010], values=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+[2025-08-28 14:53:22] INFO     [ModBusX]   IR: addrs=[30001, 30002, 30003, 30004, 30005], values=[100, 100, 100, 100, 100]
+[2025-08-28 14:53:22] INFO     [ModBusX]   CO: addrs=[1, 2, 3, 4, 5, 6, 7, 8], values=[0, 0, 0, 0, 0, 0, 0, 0]
+[2025-08-28 14:53:22] INFO     [ModBusX]   DI: addrs=[10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008], values=[1, 1, 1, 1, 1, 1, 1, 1]
+[2025-08-28 14:53:22] DEBUG    [ModBusX] RegisterMapDataBlock DI: user address range 10001 to 10008
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 10001 -> protocol addrs 0 and 1 = 1
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 10002 -> protocol addrs 1 and 2 = 1
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 10003 -> protocol addrs 2 and 3 = 1
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 10004 -> protocol addrs 3 and 4 = 1
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 10005 -> protocol addrs 4 and 5 = 1
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 10006 -> protocol addrs 5 and 6 = 1
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 10007 -> protocol addrs 6 and 7 = 1
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 10008 -> protocol addrs 7 and 8 = 1
+[2025-08-28 14:53:22] DEBUG    [ModBusX] RegisterMapDataBlock CO: user address range 1 to 8
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 1 -> protocol addrs 0 and 1 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 2 -> protocol addrs 1 and 2 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 3 -> protocol addrs 2 and 3 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 4 -> protocol addrs 3 and 4 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 5 -> protocol addrs 4 and 5 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 6 -> protocol addrs 5 and 6 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 7 -> protocol addrs 6 and 7 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 8 -> protocol addrs 7 and 8 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX] RegisterMapDataBlock HR: user address range 40001 to 40010
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40001 -> protocol addrs 0 and 1 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40002 -> protocol addrs 1 and 2 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40003 -> protocol addrs 2 and 3 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40004 -> protocol addrs 3 and 4 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40005 -> protocol addrs 4 and 5 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40006 -> protocol addrs 5 and 6 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40007 -> protocol addrs 6 and 7 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40008 -> protocol addrs 7 and 8 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40009 -> protocol addrs 8 and 9 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 40010 -> protocol addrs 9 and 10 = 0
+[2025-08-28 14:53:22] DEBUG    [ModBusX] RegisterMapDataBlock IR: user address range 30001 to 30005
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 30001 -> protocol addrs 0 and 1 = 100
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 30002 -> protocol addrs 1 and 2 = 100
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 30003 -> protocol addrs 2 and 3 = 100
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 30004 -> protocol addrs 3 and 4 = 100
+[2025-08-28 14:53:22] DEBUG    [ModBusX]   User addr 30005 -> protocol addrs 4 and 5 = 100
+[2025-08-28 14:53:22] INFO     [ModBusX] [AsyncModbusServer] Starting RTU on COM999 @ 9600
+[2025-08-28 14:53:22] INFO     [ModBusX] [AsyncModbusServer ERROR] Serial connection error: could not open port 'COM999': FileNotFoundError(2, 'The system cannot find the file specified.', None, 2)
+[2025-08-28 14:53:22] INFO     [ModBusX] [AsyncModbusServer ERROR] Serial server error: could not open port 'COM999': FileNotFoundError(2, 'The system cannot find the file specified.', None, 2)
+[2025-08-28 14:53:22] INFO     [ModBusX] AsyncioEventLoop started with 10ms interval
+[2025-08-28 14:53:22] INFO     [ModBusX] Unit 1:
+[2025-08-28 14:53:22] INFO     [ModBusX]   HR Start=40001 End=40010 (length=10)
+[2025-08-28 14:53:22] INFO     [ModBusX]   IR Start=30001 End=30005 (length=5)
+[2025-08-28 14:53:22] INFO     [ModBusX]   CO Start=1 End=8 (length=8)
+[2025-08-28 14:53:22] INFO     [ModBusX]   DI Start=10001 End=10008 (length=8)
+[2025-08-28 14:53:22] INFO     [ModBusX] Server started: COM999@9600 - RTU on COM999 @ 9600
+[2025-08-28 14:53:22] INFO     [ModBusX] Started async server: COM999@9600
+[2025-08-28 14:53:24] INFO     [ModBusX] [AsyncModbusServer] Setting up Unit 1
+[2025-08-28 14:53:24] INFO     [ModBusX]   HR: addrs=[40001, 40002, 40003, 40004, 40005, 40006, 40007, 40008, 40009, 40010], values=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+[2025-08-28 14:53:24] INFO     [ModBusX]   IR: addrs=[30001, 30002, 30003, 30004, 30005], values=[100, 100, 100, 100, 100]
+[2025-08-28 14:53:24] INFO     [ModBusX]   CO: addrs=[1, 2, 3, 4, 5, 6, 7, 8], values=[0, 0, 0, 0, 0, 0, 0, 0]
+[2025-08-28 14:53:24] INFO     [ModBusX]   DI: addrs=[10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008], values=[1, 1, 1, 1, 1, 1, 1, 1]
+[2025-08-28 14:53:24] DEBUG    [ModBusX] RegisterMapDataBlock DI: user address range 10001 to 10008
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 10001 -> protocol addrs 0 and 1 = 1
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 10002 -> protocol addrs 1 and 2 = 1
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 10003 -> protocol addrs 2 and 3 = 1
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 10004 -> protocol addrs 3 and 4 = 1
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 10005 -> protocol addrs 4 and 5 = 1
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 10006 -> protocol addrs 5 and 6 = 1
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 10007 -> protocol addrs 6 and 7 = 1
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 10008 -> protocol addrs 7 and 8 = 1
+[2025-08-28 14:53:24] DEBUG    [ModBusX] RegisterMapDataBlock CO: user address range 1 to 8
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 1 -> protocol addrs 0 and 1 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 2 -> protocol addrs 1 and 2 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 3 -> protocol addrs 2 and 3 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 4 -> protocol addrs 3 and 4 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 5 -> protocol addrs 4 and 5 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 6 -> protocol addrs 5 and 6 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 7 -> protocol addrs 6 and 7 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 8 -> protocol addrs 7 and 8 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX] RegisterMapDataBlock HR: user address range 40001 to 40010
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40001 -> protocol addrs 0 and 1 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40002 -> protocol addrs 1 and 2 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40003 -> protocol addrs 2 and 3 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40004 -> protocol addrs 3 and 4 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40005 -> protocol addrs 4 and 5 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40006 -> protocol addrs 5 and 6 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40007 -> protocol addrs 6 and 7 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40008 -> protocol addrs 7 and 8 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40009 -> protocol addrs 8 and 9 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 40010 -> protocol addrs 9 and 10 = 0
+[2025-08-28 14:53:24] DEBUG    [ModBusX] RegisterMapDataBlock IR: user address range 30001 to 30005
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 30001 -> protocol addrs 0 and 1 = 100
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 30002 -> protocol addrs 1 and 2 = 100
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 30003 -> protocol addrs 2 and 3 = 100
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 30004 -> protocol addrs 3 and 4 = 100
+[2025-08-28 14:53:24] DEBUG    [ModBusX]   User addr 30005 -> protocol addrs 4 and 5 = 100
+[2025-08-28 14:53:24] INFO     [ModBusX] [AsyncModbusServer] Starting RTU on COM999 @ 9600
+[2025-08-28 14:53:24] INFO     [ModBusX] [AsyncModbusServer ERROR] Serial connection error: could not open port 'COM999': FileNotFoundError(2, 'The system cannot find the file specified.', None, 2)
+[2025-08-28 14:53:24] INFO     [ModBusX] [AsyncModbusServer ERROR] Serial server error: could not open port 'COM999': FileNotFoundError(2, 'The system cannot find the file specified.', None, 2)
+[2025-08-28 14:53:26] INFO     [ModBusX] [AsyncModbusServer] Setting up Unit 1
+[2025-08-28 14:53:26] INFO     [ModBusX] [AsyncModbusServer] Stopping server...
+[2025-08-28 15:05:56] INFO     [ModBusX] AsyncioEventLoop started with 10ms interval
+[2025-08-28 15:05:56] INFO     [ModBusX] Unit 1:
+[2025-08-28 15:05:56] INFO     [ModBusX]   HR Start=40001 End=40010 (length=10)
+[2025-08-28 15:05:56] INFO     [ModBusX]   IR Start=30001 End=30005 (length=5)
+[2025-08-28 15:05:56] INFO     [ModBusX]   CO Start=1 End=8 (length=8)
+[2025-08-28 15:05:56] INFO     [ModBusX]   DI Start=10001 End=10008 (length=8)
+[2025-08-28 15:05:56] INFO     [ModBusX] Created async server task: COM999@9600
+[2025-08-28 15:05:56] INFO     [ModBusX] [AsyncModbusServer] Setting up Unit 1
+[2025-08-28 15:05:56] INFO     [ModBusX]   HR: addrs=[40001, 40002, 40003, 40004, 40005, 40006, 40007, 40008, 40009, 40010], values=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+[2025-08-28 15:05:56] INFO     [ModBusX]   IR: addrs=[30001, 30002, 30003, 30004, 30005], values=[100, 100, 100, 100, 100]
+[2025-08-28 15:05:56] INFO     [ModBusX]   CO: addrs=[1, 2, 3, 4, 5, 6, 7, 8], values=[0, 0, 0, 0, 0, 0, 0, 0]
+[2025-08-28 15:05:56] INFO     [ModBusX]   DI: addrs=[10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008], values=[1, 1, 1, 1, 1, 1, 1, 1]
+[2025-08-28 15:05:56] DEBUG    [ModBusX] RegisterMapDataBlock DI: user address range 10001 to 10008
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 10001 -> protocol addrs 0 and 1 = 1
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 10002 -> protocol addrs 1 and 2 = 1
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 10003 -> protocol addrs 2 and 3 = 1
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 10004 -> protocol addrs 3 and 4 = 1
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 10005 -> protocol addrs 4 and 5 = 1
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 10006 -> protocol addrs 5 and 6 = 1
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 10007 -> protocol addrs 6 and 7 = 1
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 10008 -> protocol addrs 7 and 8 = 1
+[2025-08-28 15:05:56] DEBUG    [ModBusX] RegisterMapDataBlock CO: user address range 1 to 8
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 1 -> protocol addrs 0 and 1 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 2 -> protocol addrs 1 and 2 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 3 -> protocol addrs 2 and 3 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 4 -> protocol addrs 3 and 4 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 5 -> protocol addrs 4 and 5 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 6 -> protocol addrs 5 and 6 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 7 -> protocol addrs 6 and 7 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 8 -> protocol addrs 7 and 8 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX] RegisterMapDataBlock HR: user address range 40001 to 40010
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40001 -> protocol addrs 0 and 1 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40002 -> protocol addrs 1 and 2 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40003 -> protocol addrs 2 and 3 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40004 -> protocol addrs 3 and 4 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40005 -> protocol addrs 4 and 5 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40006 -> protocol addrs 5 and 6 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40007 -> protocol addrs 6 and 7 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40008 -> protocol addrs 7 and 8 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40009 -> protocol addrs 8 and 9 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 40010 -> protocol addrs 9 and 10 = 0
+[2025-08-28 15:05:56] DEBUG    [ModBusX] RegisterMapDataBlock IR: user address range 30001 to 30005
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 30001 -> protocol addrs 0 and 1 = 100
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 30002 -> protocol addrs 1 and 2 = 100
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 30003 -> protocol addrs 2 and 3 = 100
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 30004 -> protocol addrs 3 and 4 = 100
+[2025-08-28 15:05:56] DEBUG    [ModBusX]   User addr 30005 -> protocol addrs 4 and 5 = 100
+[2025-08-28 15:05:56] INFO     [ModBusX] [AsyncModbusServer] Starting RTU on COM999 @ 9600
+[2025-08-28 15:05:56] INFO     [ModBusX] [AsyncModbusServer ERROR] Serial connection error: could not open port 'COM999': FileNotFoundError(2, 'The system cannot find the file specified.', None, 2)
+[2025-08-28 15:05:56] INFO     [ModBusX] Removing failed server COM999@9600 from active servers
+[2025-08-28 15:05:56] INFO     [ModBusX] [AsyncModbusServer ERROR] Serial server error: could not open port 'COM999': FileNotFoundError(2, 'The system cannot find the file specified.', None, 2)

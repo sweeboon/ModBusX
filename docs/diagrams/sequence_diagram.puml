@@ -1,0 +1,152 @@
+@startuml
+title ModBusX - User Workflow Sequence Diagram (Actual Architecture)
+
+skinparam sequenceMessageAlign center
+skinparam backgroundColor white
+skinparam participant {
+  BackgroundColor #F0F8FF
+}
+skinparam database {
+  BackgroundColor #87CEEB
+}
+skinparam actor {
+  BackgroundColor #F0F8FF
+}
+skinparam ParticipantBackgroundColor {
+  UI #FFE4E1
+  MGR #FFA500
+  BRIDGE #90EE90
+  SERVER #ADD8E6
+  MODEL #FFFACD
+  SERVICE #E6E6FA
+}
+
+actor User
+participant "MainWindow" as UI
+participant "ConnectionManager" as CM
+participant "ServerManager" as SM
+participant "RegisterGroupManager" as RGM
+participant "BulkOperationsHandler" as BOH
+participant "RegisterSyncService" as RSS
+participant "ScriptingService" as SS
+participant "DataRefresher" as DR
+participant "AsyncServerManager" as ASM
+participant "AsyncModbusServer" as SERVER
+database "RegisterMap" as RM
+
+== Application Startup ==
+User -> UI: Launch Application
+UI -> UI: initialize()
+UI -> UI: _setup_managers()
+create CM
+UI -> CM: new(treeView, treeModel)
+create SM
+UI -> SM: new(parent)
+UI -> RSS: get_instance()
+UI -> SS: get_instance()
+create DR
+UI -> DR: new(tableModel, tableView)
+UI -> UI: _connect_signals()
+UI --> User: Application Ready
+
+== Create New Connection ==
+User -> UI: Click "New Connection"
+UI -> UI: show_new_connection_dialog()
+User -> UI: Enter details (Protocol, IP/Port)
+UI -> CM: add_connection(port, address)
+note right of CM: Creates default Slave (ID 1) with default RegisterGroup
+CM -> UI: Emit connection_added
+UI -> User: Connection added to tree
+
+== Add Slave to Existing Connection ==
+User -> UI: Select connection in tree
+User -> UI: Click "Add Slave"
+UI -> CM: add_slave_to_selected_connection()
+CM -> User: Show InputDialog (Enter Slave ID)
+User -> CM: Enter Slave ID (e.g., 2)
+CM -> CM: Validate Slave ID (check for duplicates)
+opt Validation Success
+    CM -> RM: Create default RegisterMap for new Slave
+    CM -> RM: Add default RegisterGroup (HR 40001-40010)
+    CM -> UI: Update tree model (new slave node & group)
+    CM -> UI: Emit slave_added signal
+    opt Server is Running
+        UI -> SM: refresh_server_context(connection_info)
+        SM -> SERVER: refresh_server_context()
+        SERVER -> SERVER: Rebuild data blocks
+    end
+    UI -> User: Slave added to tree, Confirmation message
+else Validation Failed
+    CM -> User: Show Error Message (e.g., "Duplicate ID")
+end
+
+== Open Connection (Start Server) ==
+User -> UI: Click "Open"
+UI -> SM: start_server(connection_info, unit_definitions)
+SM -> ASM: start_server(server_key, server_instance)
+ASM -> SERVER: start_async()
+SERVER --> ASM: "started successfully"
+ASM -> SM: server_started signal
+SM -> RSS: register_server(server_id, server_instance)
+SM -> UI: server_started signal
+UI -> User: Connection Status: Open
+
+== Manual Edit (Real-time Sync) ==
+User -> UI: Edit cell in RegisterTableView
+UI -> RM: Update RegisterEntry value
+UI -> RSS: propagate_register_change(type, addr, value)
+RSS -> SERVER: update_register_value(type, addr, value)
+note right of RSS: Updates live server immediately
+RSS -> UI: Emit register_value_changed
+
+== Run Script ==
+User -> UI: Run Script (JSON)
+UI -> SS: run_from_file(path)
+SS -> SS: Start ScriptingRuntime
+loop Script Execution
+    SS -> RSS: apply_to_server(server_id, type, addr, val)
+    RSS -> SERVER: update_register_value(type, addr, val)
+end
+SS -> UI: Script Finished
+
+== Data Refresh Loop (Background) ==
+loop Every 1s
+    DR -> RM: Read current values
+    DR -> UI: Update Table View Model
+    note right of DR: Ensures UI reflects latest data
+end
+
+== Add Register Group ==
+User -> UI: Add Register Group
+UI -> CM: add_reggroup_to_selected_slave()
+CM -> RGM: validate/process group
+CM -> RM: Add RegisterGroup & Entries
+opt Server is Running
+    UI -> SM: refresh_server_context(connection_info)
+    SM -> SERVER: refresh_server_context()
+end
+UI -> User: Group added
+
+== Perform Bulk Operations ==
+User -> UI: Bulk Operations
+UI -> BOH: show_bulk_operations_dialog()
+User -> BOH: Execute Operation (e.g., Set Values)
+BOH -> BOH: execute (Worker Thread)
+loop For each register
+    BOH -> RM: Update Register Entry
+end
+BOH -> UI: operation_completed
+note right of BOH: Server sees changes via shared RegisterMap memory
+UI -> User: Success Message
+
+== Close Connection ==
+User -> UI: Click "Close"
+UI -> SM: stop_server(connection_info)
+SM -> ASM: stop_server(server_key)
+ASM -> SERVER: stop_async()
+ASM -> SM: server_stopped signal
+SM -> RSS: unregister_server(server_id)
+SM -> UI: server_stopped signal
+UI -> User: Connection Status: Closed
+
+@enduml

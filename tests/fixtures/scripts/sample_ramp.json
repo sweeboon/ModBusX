@@ -1,0 +1,12 @@
+{
+  "name": "sample ramp",
+  "version": 1,
+  "defaults": {"server": "127.0.0.1:502", "unit": 1, "reg_type": "hr"},
+  "steps": [
+    {"at": "0s", "action": "set", "target": {"addr": 1}, "value": 100},
+    {"at": "1s", "action": "ramp", "target": {"addr": 2},
+     "params": {"step": 5, "interval": "500ms", "duration": "3s"}},
+    {"at": "2s", "action": "pulse", "target": {"reg_type": "co", "addr": 1},
+     "params": {"high": 1, "low": 0, "hold": "300ms", "repeats": 3, "period": "1s"}}
+  ]
+}

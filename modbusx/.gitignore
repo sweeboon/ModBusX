@@ -1,0 +1,30 @@
+/docs/generated/*
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/settings.json
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyc
+*.pyo
+*.pyd
+*cpython*.pyc
+/docs/generated/*
+/logs/modbusxLog.txt
+(PC) Form E1 - Progress Report CP.txt
+\n+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+**/.venv/
+**/venv/
+**/env/
+**/ENV/
+pip-wheel-metadata/
+*.venv
+*.env
+docs/(PC) Form E2 - Progress Report CP.pdf
+docs/Evaluation.pdf
+Progress Report.pdf

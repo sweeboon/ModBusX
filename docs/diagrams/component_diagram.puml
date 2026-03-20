@@ -1,0 +1,111 @@
+@startuml
+title ModBusX – Component Overview
+
+skinparam backgroundColor white
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+' ========== COMPONENT ARCHITECTURE OVERVIEW ==========
+package "UI" #LightGreen {
+  [MainWindow]
+  [RegisterTableView]
+  [Format Editor (QTableView)]
+  [ConnectDialog]
+}
+
+package "Managers" #LightBlue {
+  [ConnectionManager]
+  [ServerManager]
+  [DataRefresher]
+  [AddressModeManager]
+  [RegisterGroupManager]
+  [BulkOperationsHandler]
+  [LanguageManager]
+  [BackupManager]
+}
+
+package "Services" #LightYellow {
+  [RegisterValidator]
+  [RegisterGroupService]
+  [RegisterSyncService] <<optional>>
+}
+
+package "Models" #MintCream {
+  [RegisterMap]
+  [RegisterEntry]
+  [RegisterGroup]
+  [RegisterMapDataBlock Adapter]
+}
+
+package "Server (asyncio)" #Wheat {
+  [AsyncModbusServer]
+  [FunctionRegistry]
+  [FunctionHandlers (Read: 0x01/0x02/0x03/0x04)]
+}
+
+package "Logging" #Snow {
+  [global_logger]
+}
+
+' ========== EXTERNAL SYSTEMS ==========
+package "Bridge" {
+    component [Async Bridge] as AsyncBridge
+    note top of AsyncBridge : Qt ⇄ asyncio integration\nshared event loop
+}
+
+package "External Dependencies" {
+    component [PyQt5] as Qt
+    component [PyModbus] as Modbus
+    component [JSON Files] as Files
+    component [Network] as Network
+    
+    note top of Qt : GUI Framework\nSignal/Slot System
+    note top of Modbus : ModBus Protocol\nTCP/RTU/ASCII Support
+}
+
+' ========== LAYER DEPENDENCIES (Top-down) ==========
+
+' Presentation -> Managers/Services
+MainWindow --> ConnectionManager : uses
+MainWindow --> ServerManager : uses
+MainWindow --> DataRefresher : uses
+MainWindow --> AddressModeManager : uses
+MainWindow --> LanguageManager : uses
+MainWindow --> BackupManager : uses
+MainWindow --> RegisterTableView : uses
+MainWindow --> "Format Editor (QTableView)" : uses
+MainWindow --> ConnectDialog : uses
+
+' Services -> Data/Bridge
+ConnectionManager --> RegisterMap : uses
+ConnectionManager --> RegisterGroup : uses
+RegisterGroupManager --> RegisterGroupService : uses
+RegisterGroupService --> RegisterMap : uses
+DataRefresher --> RegisterMap : reads
+AddressModeManager --> RegisterValidator : uses
+
+RegisterTableView --> RegisterValidator : parse/format
+RegisterTableView --> RegisterMap : update value/metadata
+RegisterTableView --> RegisterSyncService : propagate (optional)
+
+' Server/Bridge dependencies
+ServerManager --> AsyncModbusServer : start/stop
+AsyncModbusServer --> "RegisterMapDataBlock Adapter" : builds
+"RegisterMapDataBlock Adapter" --> RegisterMap : maps
+AsyncModbusServer --> FunctionRegistry : uses
+FunctionRegistry --> "FunctionHandlers (Read: 0x01/0x02/0x03/0x04)" : composes
+
+' External Dependencies
+AsyncModbusServer --> global_logger : emit RX/TX
+MainWindow --> global_logger : subscribe/filter
+
+legend right
+  Notes
+  - UI edits via RegisterTableView → RegisterMap (16-bit normalized)
+  - Server uses DataBlock adapter to access RegisterMap
+  - Only read handlers exist; write functions are not implemented yet
+  - Server normalizes RX/TX; UI filters/formats logs
+endlegend
+
+@enduml

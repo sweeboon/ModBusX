@@ -1,0 +1,880 @@
+@startuml
+title ModBusX - Complete SOA Architecture (Production Classes)
+
+' Layout Controls for Consistent Positioning
+!define DIRECTION top_to_bottom_direction
+skinparam direction top_to_bottom
+
+' Layout Spacing and Positioning Controls
+skinparam nodesep 50
+skinparam ranksep 80
+skinparam minClassWidth 120
+skinparam packageStyle folder
+
+!theme plain
+skinparam backgroundColor white
+skinparam classBackgroundColor #FFF8DC
+skinparam packageBackgroundColor white
+
+' Legend
+legend top left
+**Complete Production Architecture - SOA Compliant (Option A)**
+• 🟢 UI Layer: Pure presentation + PLC/Protocol address modes
+• 🔵 Managers: SOA orchestration + address mode coordination + workflow logic
+• ⚙️ Services: Business logic + real-time sync + address validation
+• 📦 Models: Data structures
+• 🖥️ Server: ModBus server + protocol bridge
+• 🌉 Bridge: Qt-Asyncio integration
+• 🔧 Logger: Application logging
+**Option A: Moved BulkOperationsHandler, DataRefresher to managers**
+**Features: Dynamic address modes, real-time sync, range validation (max 499999)**
+**🎉 FULL MIGRATION COMPLETE: RegisterTableView with integrated business logic**
+**Architecture Cleanup: Eliminated all adapter pattern complexity**
+end legend
+
+' ============== APPLICATION ENTRY POINT ==============
+class ModBusXApplication {
+  - qt_app: QApplication
+  - main_window: MainWindow
+  + initialize()
+  + run(): int
+  + shutdown()
+}
+
+' ============== UI LAYER (Pure Presentation) ==============
+package "ui" #LightGreen {
+  
+  class MainWindow {
+    - tree_model: QStandardItemModel
+    - reg_table_model: QStandardItemModel
+    - connection_manager: ConnectionManager
+    - register_editor: RegisterTableView
+    - server_manager: ServerManager
+    - data_refresher: DataRefresher
+    - address_mode_manager: AddressModeManager
+    - address_mode_checkbox: QCheckBox
+    + show_new_connection_dialog()
+    + open_selected_connection()
+    + on_tree_selection_changed()
+    + append_to_log_widget(msg)
+    + _setup_address_mode_toolbar()
+    + _on_address_mode_changed(mode)
+    ..Enhanced with PLC/Protocol address mode selection toolbar..
+    ..🎉 MIGRATION COMPLETE - Direct RegisterTableView usage..
+  }
+
+
+  class ConnectDialog {
+    - protocol_combo: QComboBox
+    - ipAddress: QLineEdit
+    - portNumber: QSpinBox
+    - connectButton: QDialogButtonBox
+    - settings: Dict
+    + _update_ui_for_protocol()
+    + _handle_accept()
+    + _scan_com_ports()
+    + _on_protocol_changed()
+    ..Loads modbusx/ui/connect_dialog.ui via Qt Designer..
+  }
+
+  class RegisterGroupDialog {
+    - register_map: RegisterMap
+    - reg_type_combo: QComboBox
+    - start_addr_input: AddressInputWidget
+    - size_spin: QSpinBox
+    - address_mode_combo: QComboBox
+    - status_label: QLabel
+    - _auto_adjustment_performed: bool
+    - _adjusted_start_address: int
+    + get_group_data(): Dict
+    + _update_size_limits()
+    + _on_address_mode_changed()
+    + _update_address_range()
+    + _create_custom_group()
+    + _create_from_template()
+    + _handle_conflicts(conflicts): bool
+    + _perform_auto_adjustment(): bool
+    + _auto_adjust_custom(): bool
+    + _auto_adjust_template(): bool
+    --signals--
+    + group_created(Dict)
+    ..Enhanced with auto-adjustment, address mode selection, and conflict resolution..
+  }
+
+  class MultiTypeGroupDialog {
+    - blocks_table: QTableWidget
+    - group_name_edit: QLineEdit
+    - description_edit: QTextEdit
+    + add_block_row()
+    + remove_selected_block()
+    + get_group_data(): Dict
+    --signals--
+    + group_created(MultiTypeRegisterGroup)
+    ..Located in: ui/multi_type_group_dialog.py..
+  }
+
+  class BulkOperationsDialog {
+    - bulk_handler: BulkOperationsHandler
+    - ui_loaded_successfully: bool
+    + set_register_map(register_map)
+    + _connect_handler()
+    + closeEvent(event)
+    ..Loads modbusx/ui/bulk_operations.ui; falls back to manual dialog on failure..
+  }
+
+
+  class ManualBulkOperationsDialog {
+    - bulk_handler: BulkOperationsHandler
+    + set_register_map(register_map)
+    + _create_ui()
+    + _connect_handler()
+    --signals--
+    + operation_completed(bool, str)
+    ..Fallback UI - programmatically created when .ui file fails..
+    ..Uses same BulkOperationsHandler as main dialog..
+  }
+
+  class BulkOperationWorker {
+    - operation_type: str
+    - operation_data: Dict
+    - should_cancel: bool
+    + progress: pyqtSignal(int, str)
+    + finished: pyqtSignal(bool, str)
+    + cancel_operation()
+    + run()
+  }
+
+  class ConnectionTreeView {
+    - model: QStandardItemModel
+    + add_connection_node(connection)
+    + add_slave_node(connection_id, slave)
+    + get_selected_connection(): ConnectionModel
+    --signals--
+    + selection_changed(object)
+    ..Better tree component - could replace legacy..
+  }
+
+  class RegisterTableModel {
+    - entries: List<RegisterEntry>
+    - reg_group: Dict
+    - reg_type: str
+    + set_register_group(reg_group)
+    + data(index, role)
+    + setData(index, value, role)
+    + update_headers()
+    + refresh_display()
+    --signals--
+    + cell_edited(int, int, str)
+    + register_updated(str, int, str, object)
+    ..QAbstractTableModel; virtualized rows, lazy formatting, role-based data..
+  }
+
+  class RegisterTableView {
+    - model: RegisterTableModel
+    - delegate: RegisterTableDelegate
+    - current_reg_group: Dict
+    + set_current_register_group(reg_group)
+    + populate_table_from_group()
+    + connect_address_mode_signals(manager)
+    + refresh_current_view()
+    + refresh_address_display()
+    --signals--
+    + cell_changed(int, int, str)
+    + register_changed(str, int, str, object)
+    ..🎉 FULL MIGRATION COMPLETE - Enhanced with integrated business logic..
+    ..Virtualized table (QAbstractTableModel) for 10k+ registers without freeze..
+  }
+
+  class RegisterTableDelegate {
+    + createEditor(parent, option, index)
+    + setEditorData(editor, index)
+    + setModelData(editor, model, index)
+  }
+
+  class AddressInputWidget {
+    - reg_type: str
+    - validator: AddressValidator
+    + set_register_type(reg_type)
+    + get_address_value(): int
+    + set_address_value(addr)
+    + update_mode()
+    + _get_plc_prefix(): str
+    + _ensure_plc_prefix()
+    + _setup_plc_mode()
+    + _setup_protocol_mode()
+    + _set_default_plc_address()
+    + keyPressEvent(event)
+    + focusInEvent(event)
+    --signals--
+    + addressChanged(str)
+    ..Ensures PLC prefixes/0x prefix automatically, emits raw text via addressChanged..
+  }
+
+  class AddressValidator {
+    - reg_type: str
+    + set_register_type(reg_type)
+    + validate(input_str, pos): Tuple
+    ..Uses RegisterValidator for enhanced validation with 499999 range limit..
+  }
+
+  class RegisterBlockDialog {
+    - register_map: RegisterMap
+    - reg_type_combo: QComboBox
+    - start_addr_edit: QSpinBox
+    - size_edit: QSpinBox
+    - name_edit: QLineEdit
+    + get_block_data(): Dict
+    ..Used by MultiTypeGroupDialog for adding individual blocks..
+    ..Located in: ui/multi_type_group_dialog.py..
+  }
+
+  class RegisterGroupTemplates {
+    + TEMPLATES: Dict[str, Dict]
+    + get_template(name: str): Dict
+    + get_all_template_names(): List[str]
+    ..Static template definitions for common ModBus setups..
+  }
+}
+
+' ============== MANAGER LAYER (SOA Orchestration) ==============
+package "managers" #LightBlue {
+  
+  class ConnectionManager {
+    - tree_view: QTreeView
+    - tree_model: QStandardItemModel
+    - group_manager: RegisterGroupManager
+    - bulk_operations: BulkOperationsHandler
+    + add_connection(port, address): bool
+    + add_rtu_connection(serial_port, baudrate, protocol): bool
+    + add_slave_to_selected_connection(): bool
+    + add_register_group_to_selected_slave(): bool
+    + add_multi_type_group_to_selected_slave(): bool
+    + get_selected_connection_item(): QStandardItem
+    + update_connection_status(item, is_open)
+    + refresh_register_group_addresses()
+    --signals--
+    + connection_added(str, int, str)
+    + slave_added(int, str)
+    + register_group_added(int, str)
+    + close_connection_requested(dict)
+    + refresh_connection_requested(dict)
+  }
+
+  class ServerManager {
+    - async_manager: AsyncServerManager
+    - _active_servers: Dict[str, AsyncModbusServer]
+    - sync_service: RegisterSyncService
+    + start_server(connection_info, unit_definitions): bool
+    + stop_server(connection_info): bool
+    + refresh_server_context(connection_info): bool
+    + is_server_running(connection_info): bool
+    + shutdown_all_servers()
+    + _on_async_server_started(server_key, description)
+    + _on_async_server_stopped(server_key, description)
+    --signals--
+    + server_started(str, int)
+    + server_error(str)
+    ..Enhanced with RegisterSyncService integration for real-time updates..
+  }
+
+  class RegisterGroupManager {
+    - parent: ConnectionManager
+    + duplicate_group(group_data, register_map)
+    + split_group(group_data, split_point)
+    + convert_group_type(group_data, new_type)
+    + export_group(group_data)
+    + import_group(filename, register_map)
+    --signals--
+    + group_duplicated(Dict)
+    + group_split(List[Dict])
+    + group_merged(Dict)
+  }
+
+  class AddressModeManager {
+    - current_mode: str
+    + get_current_mode(): str
+    + set_address_mode(mode)
+    + toggle_address_mode(is_plc_mode)
+    + load_settings()
+    + save_settings()
+    --signals--
+    + mode_changed(str)
+    ..Centralized manager for PLC/Protocol address mode switching..
+  }
+
+  class BulkOperationsHandler {
+    - register_map: RegisterMap
+    - operation_tabs: QTabWidget
+    + set_current_register_group(reg_group)
+    + apply_bulk_value_assignment()
+    + apply_address_renumbering()
+    + apply_type_conversion()
+    + cancel_current_operation()
+    --signals--
+    + operation_progress(int, str)
+    ..Moved from UI layer - orchestrates bulk operations workflow..
+  }
+
+  class DataRefresher {
+    - table_model: QStandardItemModel
+    - refresh_timer: QTimer
+    - refresh_interval: int
+    + set_current_register_group(reg_group)
+    + refresh_current_view()
+    + start_refresh()
+    + stop_refresh()
+    ..Moved from UI layer - manages data refresh workflow..
+  }
+
+  class LanguageManager {
+    - translator: QTranslator
+    + load_language(lang_code: str): bool
+    ..Manages internationalization (.qm loading)..
+  }
+
+  class BackupManager {
+    - timer: QTimer
+    + start_auto_backup(callback, interval_min)
+    - _perform_backup()
+    - _cleanup_old_backups()
+    ..Handles automated JSON config backups..
+  }
+
+}
+
+' ============== BUSINESS SERVICES ==============
+package "services" #LightYellow {
+  
+  class RegisterValidator {
+    - ADDRESS_MODE: str
+    - MODBUS_REGISTER_TYPES: Dict
+    + validate_register_type(reg_type: str): None
+    + set_address_mode(mode: str)
+    + get_address_mode(): str
+    + get_address_range(reg_type): Tuple[int, int]
+    + address_to_display(addr, reg_type): str
+    + display_to_address(display_addr, reg_type): int
+    + validate_address_range(start, end, reg_type): bool
+    + validate_plc_display_address(display_addr, reg_type): bool
+    + plc_to_display_address(plc_addr, reg_type): str
+    + display_to_plc_address(display_addr, reg_type): int
+    + protocol_to_display_address(protocol_addr, reg_type): str
+    + display_to_protocol_address(display_addr, reg_type): int
+    + is_address_valid_for_register_type(addr, reg_type): bool
+    + validate_address_for_register_type(addr, reg_type): bool
+    + validate_register_value_with_conversion(value_str, reg_type, parent): Optional[int]
+    + move_register_entry_with_new_address(register_map, old_reg_type, new_reg_type, old_addr, new_addr)
+    + suggest_address_for_register_type(reg_type, register_map): int
+    + suggest_contiguous_address_for_register_type(reg_type, register_map, size): int
+    + suggest_adjusted_address_for_group(reg_type, register_map, preferred_start, size): int
+    + check_address_conflicts(register_map, reg_type, start_addr, size): List[int]
+    ..Enhanced with auto-adjustment, conflict detection, and range validation (max 499999)..
+  }
+
+  ' (BulkOperationResult removed; no standalone class in code)
+
+  class ValidationError {
+    + message: str
+    + error_code: int
+  }
+
+  class ConnectionService {
+    - connections: Dict[str, ConnectionModel]
+    + create_connection(address, port, name, protocol): ConnectionModel
+    + remove_connection(address, port): bool
+    + get_connection(address, port): ConnectionModel
+    + get_all_connections(): List[ConnectionModel]
+    + create_slave(connection, slave_id, name): SlaveModel
+  }
+
+  class RegisterGroupService {
+    + create_single_type_group(register_map, reg_type, start_addr, size, ...): RegisterGroup
+    + create_multi_type_group(register_map, group_name, description, blocks): MultiTypeRegisterGroup
+    + validate_group_creation(register_map, group_data): bool
+    + update_group_properties(group, properties): bool
+  }
+
+  ' (ImportExportService removed; not present in current codebase)
+
+  class RegisterSyncService {
+    - notifier: RegisterChangeNotifier
+    - active_servers: Dict[str, Any]
+    - server_register_maps: Dict[str, RegisterMap]
+    - update_timer: QTimer
+    - pending_updates: Dict[str, Dict]
+    + register_server(server_id, server_instance, register_map)
+    + unregister_server(server_id)
+    + get_registered_servers(): List[str]
+    + propagate_register_change(reg_type, addr, new_value, source_register_map)
+    + propagate_bulk_changes(changes, debounce_ms)
+    + sync_register_map(source_map, target_server_id)
+    --signals via notifier--
+    + register_value_changed(str, int, object)
+    + register_created(str, int, object)
+    + register_deleted(str, int)
+    + register_moved(str, int, int)
+    ..Real-time register synchronization without connection restart..
+  }
+
+  class RegisterChangeNotifier {
+    + register_value_changed: pyqtSignal(str, int, object)
+    + register_created: pyqtSignal(str, int, object)
+    + register_deleted: pyqtSignal(str, int)
+    + register_moved: pyqtSignal(str, int, int)
+    + register_group_changed: pyqtSignal(str, int, int, dict)
+    + notify_value_change(reg_type, addr, new_value)
+    + notify_register_created(reg_type, addr, entry)
+    + notify_register_deleted(reg_type, addr)
+    + notify_register_moved(reg_type, old_addr, new_addr)
+    + notify_group_changes(reg_type, start_addr, size, changes)
+    ..Signal broadcaster for register change events..
+  }
+
+  ' --- Scripting (FR13) in Services ---
+  package "scripting" #LightYellow {
+    class ScriptingService {
+      + run_from_file(path: str): bool
+      + stop(): None
+      + status(): Dict
+      ..Facade for scenario load/start/stop..
+    }
+    class ScriptingRuntime {
+      - scenario: Dict
+      - _tasks: List[asyncio.Task]
+      - _last_values: Dict[(server_id, reg_type, addr), int]
+      + start(): asyncio.Task
+      + stop(): None
+      + is_running(): bool
+      + apply(server_id, reg_type, addr, value)
+      + apply_bulk(server_id, changes)
+      ..Schedules timed actions; applies via RegisterSyncService..
+    }
+  }
+
+}
+
+' ============== SERVER PACKAGE ==============
+package "server" #SkyBlue {
+  
+  class AsyncModbusServer {
+    - config: ServerConfig
+    - live_slaves: Dict[int, Dict]
+    - server_task: Optional[asyncio.Task]
+    - function_registry: FunctionHandlerRegistry
+    + start()
+    + stop()
+    + refresh_server_context()
+    + is_running(): bool
+    + _parse_request_common(data, is_tcp): ModbusRequest
+    + _get_slave_context(unit_id): slave_context
+    + _build_final_response(response, is_tcp): bytes
+    ..Uses function handlers to eliminate duplicate code..
+  }
+  
+  class FunctionHandlerRegistry {
+    - _handlers: Dict[int, BaseFunctionHandler]
+    - logger: Logger
+    + get_handler(function_code): BaseFunctionHandler
+    + handle_request(request, slave_context): ModbusResponse
+    + get_supported_functions(): List[int]
+    + is_supported(function_code): bool
+    ..Centralized registry eliminates if-elif chains..
+  }
+  
+  class BaseFunctionHandler {
+    <<abstract>>
+    - logger: Logger
+    + get_register_type_code(): int
+    + get_function_name(): str
+    + build_response_data(values, quantity): bytes
+    + handle_request(request, slave_context): ModbusResponse
+    ..Base class eliminates duplicate logic across functions..
+  }
+  
+  class ReadCoilsHandler {
+    + get_register_type_code(): int = 1
+    + get_function_name(): str = "Read Coils"
+    + build_response_data(values, quantity): bytes
+    ..Bit-packed response for coils (0x01)..
+  }
+  
+  class ReadDiscreteInputsHandler {
+    + get_register_type_code(): int = 2
+    + get_function_name(): str = "Read Discrete Inputs"  
+    + build_response_data(values, quantity): bytes
+    ..Bit-packed response for discrete inputs (0x02)..
+  }
+  
+  class ReadHoldingRegistersHandler {
+    + get_register_type_code(): int = 3
+    + get_function_name(): str = "Read Holding Registers"
+    + build_response_data(values, quantity): bytes
+    ..Word-packed response for holding registers (0x03)..
+  }
+  
+  class ReadInputRegistersHandler {
+    + get_register_type_code(): int = 4
+    + get_function_name(): str = "Read Input Registers"
+    + build_response_data(values, quantity): bytes
+    ..Word-packed response for input registers (0x04)..
+  }
+  
+  class ModbusRequest {
+    + unit_id: int
+    + function_code: int
+    + start_addr: int
+    + quantity: int
+    + raw_data: bytes
+    ..Common request structure for all protocols..
+  }
+  
+  class ModbusResponse {
+    + unit_id: int
+    + function_code: int
+    + data: bytes
+    + needs_crc: bool
+    ..Common response structure for all protocols..
+  }
+
+  class ServerConfig {
+    - protocol: ServerProtocol
+    - address: str
+    - port: int
+    - serial_port: Optional[str]
+    - baudrate: int
+    - parity: str
+    - stopbits: int
+    - bytesize: int
+  }
+  
+  enum ServerProtocol {
+    TCP = "tcp"
+    RTU = "rtu"
+    ASCII = "ascii"
+  }
+
+  class RegisterMapDataBlock {
+    - register_map: RegisterMap
+    - regtype: str
+    + getValues(address, count): List[int]
+    + setValues(address, values): bool
+    + validate(address, count): bool
+    + _find_register_by_protocol_addr(addr): RegisterEntry
+    ..PyModbus bridge - converts RegisterMap to ModbusSparseDataBlock..
+    ..Handles protocol address ↔ user address translation..
+  }
+
+}
+
+' ============== BRIDGE PACKAGE ==============
+package "bridge" #LightSteelBlue {
+  
+  class AsyncioEventLoop {
+    - loop: Optional[asyncio.AbstractEventLoop]
+    - timer: QTimer
+    - running: bool
+    + start_loop(interval_ms)
+    + stop_loop()
+    + run_coroutine(coro)
+    + call_soon_threadsafe(callback, *args)
+    --signals--
+    + status_update(str)
+    + error_occurred(str)
+  }
+
+  class AsyncServerManager {
+    - async_loop: AsyncioEventLoop
+    - servers: Dict[str, Any]
+    + start_server(server_key, async_server): bool
+    + stop_server(server_key): bool
+    + is_server_running(server_key): bool
+    + shutdown_all()
+    + _parse_server_key(server_key): tuple
+    + _emit_legacy_started(server_key, description)
+    + _emit_legacy_stopped(server_key, description)
+    --signals--
+    + server_started(str, str)
+    + server_stopped(str, str)
+    + server_error(str, str)
+    + server_status(str, str)
+    + legacy_server_started(str, int)
+    + legacy_server_stopped(str, int)
+    + legacy_server_error(str)
+    ..Unified with backward compatibility layer..
+  }
+}
+
+' ============== ROOT LEVEL UTILITIES ==============
+class ModBusXLogger {
+  - logger: logging.Logger
+  - name: str
+  + debug(message: str, *args)
+  + info(message: str, *args) 
+  + warning(message: str, *args)
+  + error(message: str, *args)
+  + critical(message: str, *args)
+  + set_level(level: str)
+  --signals--
+  + log_message(str, str, str)
+  + debug_message(str)
+  + info_message(str)
+  + warning_message(str)
+  + error_message(str)
+  ..Qt-integrated logging with signal support - located at modbusx/logger.py..
+}
+
+' ============== MODELS (Data Structures) ==============
+package "models" #LightCyan {
+  
+  class ConnectionModel {
+    - address: str
+    - port: int
+    - name: str
+    - protocol: str
+    - slaves: List[SlaveModel]
+    - is_open: bool
+    - metadata: Dict
+    + connection_string: str
+    + add_slave(slave: SlaveModel): void
+    + remove_slave(slave_id: int): bool
+    + get_slave(slave_id: int): SlaveModel
+    + get_next_slave_id(): int
+    + get_statistics(): Dict
+    + to_dict(): Dict
+    + from_dict(data: Dict): ConnectionModel
+  }
+
+  class SlaveModel {
+    - slave_id: int
+    - name: str
+    - description: str
+    - register_map: RegisterMap
+    - register_groups: List[RegisterGroup]
+    - multi_type_groups: List[MultiTypeRegisterGroup]
+    - metadata: Dict
+    - is_active: bool
+    + add_register_group(group: RegisterGroup): void
+    + remove_register_group(group_id: int): bool
+    + get_register_group(group_id: int): RegisterGroup
+    + add_multi_type_group(multi_group: MultiTypeRegisterGroup): void
+    + get_all_groups(): List[Dict]
+    + get_statistics(): Dict
+    + to_dict(): Dict
+    + from_dict(data: Dict): SlaveModel
+  }
+
+  class RegisterMap {
+    - hr: Dict[int, RegisterEntry]
+    - ir: Dict[int, RegisterEntry]
+    - co: Dict[int, RegisterEntry]
+    - di: Dict[int, RegisterEntry]
+    + add_register(entry: RegisterEntry)
+    + remove_register(reg_type: str, addr: int)
+    + get_register(reg_type, addr): RegisterEntry
+    + get_all_registers(reg_type): List[RegisterEntry]
+    + add_block(reg_type, start_addr, size, default_value)
+    + get_statistics(): Dict
+    + all_entries(reg_type): List[RegisterEntry]
+    + as_pymodbus_array()
+    + normalize_addresses()
+  }
+
+  class RegisterEntry {
+    - addr: int
+    - reg_type: str
+    - value: int
+    - alias: str
+    - comment: str
+    - units: str
+    + copy(**kwargs): RegisterEntry
+    + to_dict(): Dict
+    + from_dict(data): RegisterEntry
+    + __eq__(other): bool
+  }
+
+  class RegisterGroup {
+    - group_id: int
+    - name: str
+    - reg_type: str
+    - start_addr: int
+    - size: int
+    - default_value: int
+    - description: str
+    - template_name: str
+    + end_addr: int
+    + address_range: str
+    + generate_register_entries(): List[RegisterEntry]
+    + overlaps_with(other_group): bool
+    + to_dict(): Dict
+    + from_dict(data): RegisterGroup
+  }
+
+  class MultiTypeRegisterGroup {
+    - group_id: int
+    - name: str
+    - description: str
+    - blocks: List[RegisterBlock]
+    - metadata: Dict
+    + add_block(block: RegisterBlock)
+    + remove_block(block_index: int): RegisterBlock
+    + generate_register_entries(): List[RegisterEntry]
+    + validate_blocks(): bool
+    + get_address_ranges(): Dict[str, List[Tuple[int, int]]]
+    + to_dict(): Dict
+    + from_dict(data): MultiTypeRegisterGroup
+  }
+
+  class RegisterBlock {
+    - block_id: int
+    - reg_type: str
+    - start_addr: int
+    - size: int
+    - name: str
+    - description: str
+    - default_value: int
+    - created_at: str
+    - modified_at: str
+    - metadata: Dict[str, Any]
+    + end_addr: int
+    + block_name: str
+    + block_description: str
+    + contains_address(addr: int): bool
+    + overlaps_with(other: RegisterBlock): bool
+    + can_merge_with(other: RegisterBlock): bool
+    + to_register_group(group_id: int): RegisterGroup
+    + generate_register_entries(): List[RegisterEntry]
+    + to_dict(): Dict
+    + from_dict(data): RegisterBlock
+  }
+
+}
+
+' ============== LAYOUT GROUPINGS ==============
+' Note: together blocks removed due to PlantUML syntax compatibility issues
+' The hidden positioning links and skinparam controls provide sufficient layout consistency
+
+' ============== RELATIONSHIPS ==============
+
+' Application Entry Point
+ModBusXApplication *-- MainWindow : **creates & owns**
+
+' UI Architecture (Production)
+MainWindow *-- ConnectionManager : **creates in _setup_managers()**
+MainWindow *-- RegisterTableView : **creates enhanced component in _setup_managers()**
+MainWindow *-- ServerManager : **creates in _setup_managers()**
+MainWindow *-- DataRefresher : **creates in _setup_managers()**
+MainWindow *-- AddressModeManager : **creates in _setup_managers()**
+MainWindow *-- LanguageManager : **creates & uses**
+MainWindow *-- BackupManager : **creates & uses**
+
+' Manager Layer Structure
+ConnectionManager *-- RegisterGroupManager : **creates in __init__**
+ConnectionManager *-- BulkOperationsHandler : **creates in __init__**
+
+' UI Dialog Relationships  
+MainWindow ..> ConnectDialog : **creates and uses**
+ConnectionManager ..> RegisterGroupDialog : **creates and uses**
+RegisterGroupDialog ..> RegisterGroupManager : **uses**
+RegisterGroupDialog ..> AddressInputWidget : **uses for address input with locked prefixes**
+ConnectionManager ..> MultiTypeGroupDialog : **creates and uses**
+MultiTypeGroupDialog ..> RegisterGroupManager : **uses**
+ConnectionManager ..> ManualBulkOperationsDialog : **creates and uses**
+ManualBulkOperationsDialog ..> BulkOperationsHandler : **uses from managers layer**
+BulkOperationsHandler ..> BulkOperationWorker : **creates**
+
+' UI Component Relationships
+RegisterTableView *-- RegisterTableModel : **setModel(...)**
+RegisterTableView ..> RegisterTableDelegate : **uses**
+AddressInputWidget ..> AddressValidator : **uses**
+RegisterTableView ..> AddressModeManager : **connects to for mode changes**
+
+' SOA Layering Relationships
+ConnectionManager ..> RegisterGroupService : **orchestrates**
+ServerManager ..> AsyncModbusServer : **manages**
+ServerManager ..> AsyncServerManager : **uses**
+ServerManager ..> RegisterSyncService : **uses for real-time sync**
+ServerManager ..> ConnectionService : **uses to get unit definitions**
+RegisterGroupManager ..> RegisterValidator : **uses**
+RegisterTableModel ..> RegisterSyncService : **propagates changes**
+RegisterTableModel ..> RegisterValidator : **uses for validation & address conversion**
+RegisterTableModel ..> RegisterMap : **reads/writes entries lazily**
+AddressModeManager ..> RegisterValidator : **uses for mode switching**
+AddressInputWidget ..> RegisterValidator : **uses for validation**
+AddressValidator ..> RegisterValidator : **uses for range checking**
+
+' Domain Model Structure
+ConnectionModel *-- SlaveModel : **contains**
+SlaveModel *-- RegisterMap : **contains**
+SlaveModel *-- RegisterGroup : **contains**
+SlaveModel *-- MultiTypeRegisterGroup : **contains**
+RegisterMap *-- RegisterEntry : **contains**
+MultiTypeRegisterGroup *-- RegisterBlock : **contains**
+
+' Server Architecture
+AsyncModbusServer ..> RegisterMapDataBlock : **uses**
+AsyncModbusServer *-- ServerConfig : **configured by**
+AsyncModbusServer ..> FunctionHandlerRegistry : **uses for request handling**
+ServerConfig ..> ServerProtocol : **uses**
+RegisterMapDataBlock ..> RegisterMap : **wraps & provides PyModbus interface to**
+RegisterMapDataBlock ..> RegisterEntry : **reads/writes via RegisterMap**
+AsyncServerManager ..> AsyncioEventLoop : **uses**
+AsyncServerManager ..> AsyncModbusServer : **manages**
+
+' Function Handler Architecture
+FunctionHandlerRegistry *-- BaseFunctionHandler : **manages collection of**
+BaseFunctionHandler <|-- ReadCoilsHandler : **implements**
+BaseFunctionHandler <|-- ReadDiscreteInputsHandler : **implements**
+BaseFunctionHandler <|-- ReadHoldingRegistersHandler : **implements**
+BaseFunctionHandler <|-- ReadInputRegistersHandler : **implements**
+FunctionHandlerRegistry ..> ModbusRequest : **processes**
+BaseFunctionHandler ..> ModbusResponse : **creates**
+
+' Service Results - both classes located in services package
+RegisterValidator ..> ValidationError : **throws**
+
+' RegisterSyncService Relationships
+RegisterSyncService *-- RegisterChangeNotifier : **contains for signal broadcasting**
+RegisterSyncService ..> RegisterMap : **synchronizes**
+RegisterSyncService ..> RegisterEntry : **propagates changes**
+
+' Scripting relationships
+ScriptingService *-- ScriptingRuntime : **creates & controls**
+ScriptingRuntime ..> RegisterSyncService : **applies values to servers**
+ScriptingRuntime ..> AsyncServerManager : **schedules on shared asyncio loop**
+
+' Service Usage
+ConnectionService *-- ConnectionModel : **manages collections**
+ConnectionService ..> ConnectionModel : **creates**
+RegisterGroupService ..> RegisterGroup : **creates**
+RegisterGroupService ..> MultiTypeRegisterGroup : **creates**
+
+' Utility Relationships
+RegisterGroupDialog ..> RegisterGroupTemplates : **uses**
+MultiTypeGroupDialog ..> RegisterBlockDialog : **creates**
+
+' ============== LAYOUT POSITIONING CONSTRAINTS ==============
+' Hidden links to force consistent package positioning across diagram regeneration
+' These invisible connections maintain spatial relationships between major packages
+
+' Top row: Application Entry Point
+ModBusXApplication -[hidden]down- ui
+
+' Second row: UI package positioned top-left
+ui -[hidden]right- managers
+
+' Third row: Core business layers
+managers -[hidden]down- services
+services -[hidden]right- models
+
+' Fourth row: Infrastructure layers
+managers -[hidden]down- server
+server -[hidden]right- bridge
+
+' Vertical alignment constraints
+ui -[hidden]down- services
+models -[hidden]down- bridge
+
+' Logger positioning (root level utility)
+ModBusXLogger -[hidden]down- models
+
+@enduml

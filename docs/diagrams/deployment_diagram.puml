@@ -1,0 +1,156 @@
+@startuml
+title ModBusX – Deployment (Desktop)
+
+skinparam backgroundColor white
+skinparam nodeBackgroundColor #E8F4FD
+skinparam artifactBackgroundColor #FFF2CC
+skinparam databaseBackgroundColor #D5E8D4
+skinparam node {
+  BackgroundColor #E8F4FD
+  BackgroundColor<<production>> #D5E8D4
+  BackgroundColor<<enterprise>> #FFE4B5
+  BackgroundColor<<cloud>> #E0F6FF
+}
+skinparam artifact {
+  BackgroundColor #FFF2CC
+  BackgroundColor<<production>> #D5E8D4
+  BackgroundColor<<enterprise>> #FFE4B5
+  BackgroundColor<<cloud>> #E0F6FF
+}
+skinparam database {
+  BackgroundColor #D5E8D4
+  BackgroundColor<<enterprise>> #FFE4B5
+  BackgroundColor<<cloud>> #E0F6FF
+}
+
+node "User Desktop" <<production>> as Desktop {
+  artifact "ModBusX App" <<production>> as App {
+    [PyQt5 UI]
+    [AsyncModbusServer]
+    [PyModbus]
+  }
+  database "User Data" <<production>> as UserData {
+    [~/.modbusx/logs]
+    [settings.json]
+  }
+}
+
+cloud "Modbus Network" as Net {
+  node "Modbus Master (TCP)" as MasterTCP
+  node "Serial Master (RTU/ASCII)" as MasterSER
+}
+
+Desktop -down-> Net : TCP 502
+Desktop -down-> MasterSER : Serial (COM/tty)
+
+' Development Environment
+DevApp --> DevConfig : reads/writes
+DevApp --> DevTools : uses
+DevApp ..> ModbusNet : TCP/502, RTU/Serial
+
+' Production Desktop
+ProdApp --> ProdData : stores configs
+ProdApp --> ProdDeps : uses
+ProdApp ..> ModbusNet : ModBus TCP/RTU
+
+' Enterprise Environment
+ServerApp --> EntDB : stores data
+ServerApp ..> ModbusNet : proxy connections
+EntClients --> ServerApp : HTTPS/REST API
+ServerApp --> Container : deployed in
+
+' Cloud Environment
+ClientApp --> Gateway : HTTPS/API calls
+Gateway --> Microservices : routes requests
+Microservices --> CloudDB : data persistence
+Microservices ..> ModbusNet : secure tunnels
+Monitoring --> Microservices : monitors health
+
+' Cross-environment data flow
+DevApp -.-> ProdApp : deployment pipeline
+ProdApp -.-> EntServer : configuration export
+EntServer -.-> CloudInfra : cloud migration
+
+' ========== NETWORK PROTOCOLS ==========
+note top of ModbusNet
+**ModBus Protocol Support:**
+• TCP/IP Server (Port 502)
+• RTU Serial Server (COM ports)
+• ASCII Serial Server (COM ports)
+• PyModbus 3.x Compatible
+• Exclusive COM port access
+• PLC & Protocol addressing modes
+end note
+
+note top of EntServer
+**Enterprise Features:**
+• Multi-user access
+• Role-based permissions
+• Centralized configuration
+• Historical data logging
+• RESTful API
+end note
+
+note top of CloudInfra
+**Cloud Benefits:**
+• Auto-scaling
+• High availability
+• Global deployment
+• Managed services
+• Monitoring & alerting
+end note
+
+' ========== DEPLOYMENT ENVIRONMENTS ==========
+
+package "Deployment Environments" {
+    rectangle "Development" #E8F4FD {
+        [Local development]
+        [Unit testing]
+        [Integration testing]
+        [Diagram generation]
+    }
+    
+    rectangle "Staging" #FFF2CC {
+        [User acceptance testing]
+        [Performance testing]
+        [Security testing]
+        [Documentation review]
+    }
+    
+    rectangle "Production" #D5E8D4 {
+        [Desktop deployment]
+        [Enterprise deployment]
+        [Cloud deployment]
+        [Monitoring & support]
+    }
+}
+
+' ========== SECURITY CONSIDERATIONS ==========
+note as SecurityNote
+**Security Considerations:**
+• ModBus protocol security (limited)
+• VPN tunnels for remote access
+• Certificate-based authentication
+• Network segmentation
+• Audit logging
+• Role-based access control
+• Encrypted configuration storage
+end note
+
+SecurityNote .. ModbusNet
+
+' ========== SCALABILITY NOTES ==========
+note as ScalabilityNote
+**Scalability Patterns:**
+• Horizontal scaling (microservices)
+• Connection pooling
+• Caching strategies
+• Async operations
+• Load balancing
+• Database sharding
+• Event-driven architecture
+end note
+
+ScalabilityNote .. CloudInfra
+
+@enduml

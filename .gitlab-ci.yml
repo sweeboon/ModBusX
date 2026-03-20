@@ -1,0 +1,192 @@
+# GitLab CI/CD Pipeline for ModBusX
+# Focus: PlantUML diagram generation and documentation
+
+stages:
+  - generate-docs
+  - deploy-docs
+
+variables:
+  # PlantUML version to use
+  PLANTUML_VERSION: "1.2023.13"
+  # Paths
+  DIAGRAMS_SOURCE: "docs/diagrams"
+  DIAGRAMS_OUTPUT: "docs/diagrams/generated"
+
+# Generate PlantUML diagrams
+generate-plantuml:
+  stage: generate-docs
+  image: openjdk:11-jre-slim
+  before_script:
+    # Install required packages
+    - apt-get update && apt-get install -y curl graphviz
+    # Download PlantUML jar
+    - curl -L "https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar" -o plantuml.jar
+    # Verify PlantUML installation
+    - java -jar plantuml.jar -version
+  script:
+    # Create output directory
+    - mkdir -p ${DIAGRAMS_OUTPUT}
+    
+    # Generate PNG diagrams
+    - echo "Generating PNG diagrams..."
+    - java -jar plantuml.jar -tpng -o "../generated" ${DIAGRAMS_SOURCE}/*.puml
+    
+    # Generate SVG diagrams (better for web)
+    - echo "Generating SVG diagrams..."
+    - java -jar plantuml.jar -tsvg -o "../generated" ${DIAGRAMS_SOURCE}/*.puml
+    
+    # Generate PDF diagrams (better for documentation)
+    - echo "Generating PDF diagrams..."
+    - java -jar plantuml.jar -tpdf -o "../generated" ${DIAGRAMS_SOURCE}/*.puml || true
+    
+    # List generated files
+    - echo "Generated diagram files:"
+    - ls -la ${DIAGRAMS_OUTPUT}/
+  artifacts:
+    paths:
+      - ${DIAGRAMS_OUTPUT}/*.png
+      - ${DIAGRAMS_OUTPUT}/*.svg
+      - ${DIAGRAMS_OUTPUT}/*.pdf
+    expire_in: 30 days
+    reports:
+      # Create a simple report of generated diagrams
+      junit: diagram-report.xml
+  after_script:
+    # Create a simple XML report for GitLab
+    - |
+      cat > diagram-report.xml << EOF
+      <?xml version="1.0" encoding="UTF-8"?>
+      <testsuites>
+        <testsuite name="PlantUML Generation" tests="$(ls ${DIAGRAMS_OUTPUT}/*.svg 2>/dev/null | wc -l)" failures="0">
+          $(for file in ${DIAGRAMS_OUTPUT}/*.svg; do
+            if [ -f "$file" ]; then
+              echo "<testcase classname=\"PlantUML\" name=\"$(basename "$file" .svg)\"/>"
+            fi
+          done)
+        </testsuite>
+      </testsuites>
+      EOF
+  rules:
+    # Run manually only
+    - when: manual
+      allow_failure: false
+
+# Deploy documentation to GitLab Pages
+pages:
+  stage: deploy-docs
+  image: alpine:latest
+  dependencies:
+    - generate-plantuml
+  before_script:
+    - apk add --no-cache rsync
+  script:
+    # Create public directory for GitLab Pages
+    - mkdir -p public/diagrams
+    
+    # Copy generated diagrams
+    - if [ -d "${DIAGRAMS_OUTPUT}" ]; then
+        rsync -av ${DIAGRAMS_OUTPUT}/ public/diagrams/;
+      fi
+    
+    # Create a simple HTML index for diagrams
+    - |
+      cat > public/index.html << 'EOF'
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <title>ModBusX Architecture Diagrams</title>
+          <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              .diagram { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+              .diagram h3 { color: #333; }
+              .diagram img { max-width: 100%; height: auto; border: 1px solid #eee; }
+              .links { margin: 10px 0; }
+              .links a { margin-right: 10px; padding: 5px 10px; background: #f0f0f0; text-decoration: none; }
+          </style>
+      </head>
+      <body>
+          <h1>ModBusX Architecture Diagrams</h1>
+          <p>Generated automatically from PlantUML source files.</p>
+      EOF
+    
+    # Add diagram sections to HTML
+    - |
+      for puml_file in docs/diagrams/*.puml; do
+        if [ -f "$puml_file" ]; then
+          filename=$(basename "$puml_file" .puml)
+          echo "<div class='diagram'>" >> public/index.html
+          echo "<h3>$filename</h3>" >> public/index.html
+          if [ -f "public/diagrams/${filename}.svg" ]; then
+            echo "<img src='diagrams/${filename}.svg' alt='$filename diagram'/>" >> public/index.html
+          fi
+          echo "<div class='links'>" >> public/index.html
+          if [ -f "public/diagrams/${filename}.svg" ]; then
+            echo "<a href='diagrams/${filename}.svg'>SVG</a>" >> public/index.html
+          fi
+          if [ -f "public/diagrams/${filename}.png" ]; then
+            echo "<a href='diagrams/${filename}.png'>PNG</a>" >> public/index.html
+          fi
+          if [ -f "public/diagrams/${filename}.pdf" ]; then
+            echo "<a href='diagrams/${filename}.pdf'>PDF</a>" >> public/index.html
+          fi
+          echo "</div></div>" >> public/index.html
+        fi
+      done
+    
+    # Close HTML
+    - echo "</body></html>" >> public/index.html
+    
+    # Create a JSON index for API access
+    - |
+      echo '{"diagrams": [' > public/diagrams.json
+      first=true
+      for svg_file in public/diagrams/*.svg; do
+        if [ -f "$svg_file" ]; then
+          filename=$(basename "$svg_file" .svg)
+          if [ "$first" = true ]; then
+            first=false
+          else
+            echo ',' >> public/diagrams.json
+          fi
+          echo "  {" >> public/diagrams.json
+          echo "    \"name\": \"$filename\"," >> public/diagrams.json
+          echo "    \"svg\": \"diagrams/${filename}.svg\"," >> public/diagrams.json
+          echo "    \"png\": \"diagrams/${filename}.png\"" >> public/diagrams.json
+          echo "  }" >> public/diagrams.json
+        fi
+      done
+      echo ']}' >> public/diagrams.json
+    
+    # List what we're deploying
+    - echo "Deploying to GitLab Pages:"
+    - find public -type f | head -20
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  rules:
+    # Deploy when generate-plantuml succeeds
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # Deploy manually
+    - when: manual
+      allow_failure: false
+
+# Validate PlantUML syntax (optional quality check)
+validate-plantuml:
+  stage: generate-docs
+  image: openjdk:11-jre-slim
+  before_script:
+    - apt-get update && apt-get install -y curl
+    - curl -L "https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar" -o plantuml.jar
+  script:
+    # Check syntax of all PlantUML files
+    - echo "Validating PlantUML syntax..."
+    - for file in ${DIAGRAMS_SOURCE}/*.puml; do
+        echo "Checking $file...";
+        java -jar plantuml.jar -checkonly "$file";
+      done
+    - echo "All PlantUML files are syntactically valid!"
+  rules:
+    # Run manually only
+    - when: manual
+  allow_failure: false
