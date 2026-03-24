@@ -156,5 +156,3 @@ class RegisterGroupService:
 1. **High Priority**: Extract business logic from UI (Services)
 2. **Medium Priority**: Create controller layer
 3. **Low Priority**: Refactor models (already mostly separated)
-
-Would you like me to proceed with this refactoring?
